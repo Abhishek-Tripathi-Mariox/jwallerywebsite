@@ -1,0 +1,206 @@
+.pdp {
+  padding: 32px 24px 56px;
+}
+
+.pdp-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 32px;
+}
+
+.pdp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Left image column */
+.pdp-image {
+  position: relative;
+  background: #f4f6f3;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.pdp-image > img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+.pdp-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pdp-thumbs button {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  padding: 0;
+  background: #fff;
+}
+.pdp-thumbs button.active { border-color: var(--color-primary); }
+.pdp-thumbs img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+
+/* Right info column */
+.pdp-info { padding: 4px 4px; }
+
+.pdp-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #f5b400;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+.pdp-rating span {
+  margin-left: 8px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pdp-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+
+.pdp-desc {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+.pdp-price-block {
+  margin-bottom: 24px;
+}
+.pdp-price {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+.pdp-tax {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Specs as plain rows */
+.pdp-specs {
+  margin-bottom: 28px;
+  border-top: 1px solid var(--color-border);
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+.spec-row span { color: var(--color-text-muted); }
+.spec-row strong { color: var(--color-text); font-weight: 600; }
+
+/* Actions */
+.pdp-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pdp-actions .btn { flex: 1; min-width: 160px; }
+
+/* Skeleton loading state — shimmering placeholders shown while the product
+   request is in flight (replaces the old static "Product 1" fallback). */
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: #ececec;
+  border-radius: 8px;
+}
+.sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: sk-shimmer 1.3s infinite;
+}
+@keyframes sk-shimmer {
+  100% { transform: translateX(100%); }
+}
+.sk-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius);
+}
+.sk-thumb {
+  width: 64px;
+  height: 64px;
+}
+.sk-line {
+  height: 14px;
+  margin-bottom: 14px;
+}
+.sk-title { height: 30px; margin-bottom: 20px; }
+.sk-price { height: 34px; margin-bottom: 28px; }
+.sk-specs {
+  border-top: 1px solid var(--color-border);
+  padding-top: 18px;
+  margin-bottom: 28px;
+}
+.sk-btn {
+  height: 48px;
+  flex: 1;
+  min-width: 160px;
+  border-radius: var(--radius);
+}
+
+/* Empty / not-found state */
+.pdp-empty {
+  text-align: center;
+  padding: 48px 16px;
+}
+.pdp-empty h2 {
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+.pdp-empty p {
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+}
+
+/* Recommended products */
+.pdp-reco {
+  margin-top: 48px;
+}
+.pdp-reco-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .pdp-card { padding: 16px; }
+  .pdp-grid { grid-template-columns: 1fr; gap: 24px; }
+  .pdp-title { font-size: 26px; }
+  .pdp-price { font-size: 28px; }
+  .pdp-reco-title { font-size: 20px; }
+}
