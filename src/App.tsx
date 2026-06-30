@@ -20,6 +20,7 @@ import StaticPage from "./pages/StaticPage";
 import NotFound from "./pages/NotFound";
 import { useLogoStore } from "./store/logoStore";
 import Toaster from "./components/shared/Toaster";
+import SwarnazPolicies from "./components/shared/SwarnazPolicies";
 
 function useApplyBrandAssets() {
   const byType = useLogoStore((s) => s.byType);
@@ -104,7 +105,11 @@ export default function App() {
           <Route
             path="/terms"
             element={
-              <StaticPage slug="terms" fallbackTitle="Terms of Service" />
+              <StaticPage
+                slug="terms"
+                fallbackTitle="Terms & Conditions"
+                fallbackBody={<SwarnazPolicies showTermsOnly />}
+              />
             }
           />
           <Route
@@ -119,7 +124,11 @@ export default function App() {
           <Route
             path="/return-policy"
             element={
-              <StaticPage slug="return-policy" fallbackTitle="Return Policy" />
+              <StaticPage
+                slug="return-policy"
+                fallbackTitle="Swarnaz Smart Gold Jewellery Policies"
+                fallbackBody={<SwarnazPolicies />}
+              />
             }
           />
           <Route
