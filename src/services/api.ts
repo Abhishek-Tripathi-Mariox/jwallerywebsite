@@ -323,6 +323,13 @@ export const computeChargesLocal = (
 
 export const placeOrder = (data: unknown) => unwrap(api.post("/user/orders", data));
 
+export const verifyRazorpayPayment = (data: {
+  orderId: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}) => unwrap(api.post("/user/payment/verify", data));
+
 // ---------- Helpers ----------
 
 /**

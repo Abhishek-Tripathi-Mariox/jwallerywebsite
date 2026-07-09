@@ -8,6 +8,7 @@ import {
   deleteAddress,
   selectAddress,
   placeOrder,
+  verifyRazorpayPayment,
   fetchChargesConfig,
   type PublicChargesConfig,
 } from "../services/api";
@@ -21,6 +22,31 @@ const PAYMENT_METHODS = [
   { id: "card", title: "Credit/Debit Card", subtitle: "Visa, Mastercard, RuPay" },
   { id: "upi", title: "UPI", subtitle: "Google Pay, PhonePe, Paytm" },
 ];
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const RAZORPAY_SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
+
+let razorpayScriptPromise: Promise<boolean> | null = null;
+const loadRazorpayScript = (): Promise<boolean> => {
+  if (window.Razorpay) return Promise.resolve(true);
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+  razorpayScriptPromise = new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = RAZORPAY_SCRIPT_SRC;
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      razorpayScriptPromise = null;
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+  return razorpayScriptPromise;
+};
 
 const fmt = (n: number) => `₹${Number(n).toLocaleString("en-IN")}`;
 
@@ -113,22 +139,67 @@ export default function Checkout() {
       addressId: selectedId,
       paymentMode: toBackendPaymentMode(payment),
     });
-    setPlacing(false);
-    if (r?.code === 1) {
-      // Online flow returns a razorpay payload here; we don't have a payment UI
-      // yet so just show a placeholder. COD goes straight to confirmed.
-      if (r?.data?.razorpay) {
-        toast.info(
-          "Online payment isn't wired up on the website yet. Pick Cash on Delivery for now.",
-          6000,
-        );
-        return;
-      }
+    if (r?.code !== 1) {
+      setPlacing(false);
+      toast.error(r?.message || "Failed to place order");
+      return;
+    }
+
+    const rp = r?.data?.razorpay;
+    if (!rp) {
+      setPlacing(false);
       toast.success("Order placed successfully!");
       navigate("/orders");
-    } else {
-      toast.error(r?.message || "Failed to place order");
+      return;
     }
+
+    const scriptOk = await loadRazorpayScript();
+    setPlacing(false);
+    if (!scriptOk) {
+      toast.error("Couldn't load payment gateway. Your order is saved as pending — try again from Orders.");
+      navigate("/orders");
+      return;
+    }
+
+    const orderMongoId = r?.data?.order?._id;
+    const razorpay = new window.Razorpay({
+      key: rp.keyId,
+      amount: rp.amount,
+      currency: rp.currency,
+      order_id: rp.orderId,
+      name: "Swarnaz",
+      description: "Order payment",
+      prefill: {
+        name: selected?.fullName || "",
+        email: selected?.email || "",
+      },
+      handler: async (response: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+      }) => {
+        const v: any = await verifyRazorpayPayment({
+          orderId: orderMongoId,
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpaySignature: response.razorpay_signature,
+        });
+        if (v?.code === 1) {
+          toast.success("Payment successful! Order placed.");
+        } else {
+          toast.error(v?.message || "Payment verification failed. Contact support if amount was deducted.");
+        }
+        navigate("/orders");
+      },
+      modal: {
+        ondismiss: () => {
+          toast.info("Payment cancelled. Your order is saved as pending — pay anytime from Orders.", 6000);
+          navigate("/orders");
+        },
+      },
+      theme: { color: "#b8860b" },
+    });
+    razorpay.open();
   };
 
   const openAdd = () => {
