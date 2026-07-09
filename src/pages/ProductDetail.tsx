@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiHeart, FiShoppingCart } from "react-icons/fi";
+import { FiArrowLeft, FiHeart, FiShoppingCart, FiShare2, FiBox } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import {
   fetchProductDetails,
@@ -12,9 +12,15 @@ import {
 } from "../services/api";
 import type { Product } from "../types";
 import ProductCard from "../components/shared/ProductCard";
+import Spin360Viewer from "../components/shared/Spin360Viewer";
 import { addToCartAction, toggleWishlistAction } from "../lib/cartActions";
 import { toast } from "../store/toastStore";
 import "./ProductDetail.css";
+
+// @google/model-viewer bundles its own WebGL renderer (~1MB) — code-split it
+// into its own chunk so it only loads for the fraction of visitors who
+// actually click "View in 3D", instead of bloating every product page load.
+const Model3DViewer = lazy(() => import("../components/shared/Model3DViewer"));
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -22,6 +28,8 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
+  const [spinMode, setSpinMode] = useState(false);
+  const [model3dMode, setModel3dMode] = useState(false);
   const [recommended, setRecommended] = useState<Product[]>([]);
   const [prepaidPercent, setPrepaidPercent] = useState(0);
 
@@ -36,6 +44,8 @@ export default function ProductDetail() {
     if (!id) return;
     setLoading(true);
     setActiveImg(0);
+    setSpinMode(false);
+    setModel3dMode(false);
     fetchProductDetails(id).then((res: any) => {
       // backend returns the product object directly under `data`
       setProduct(res?.code === 1 ? (res.data as Product) : null);
@@ -66,6 +76,24 @@ export default function ProductDetail() {
   const onCardWish = async (rp: Product) => {
     const r = await toggleWishlistAction(rp);
     if (!r.ok) toast.error(r.message || "Could not update wishlist");
+  };
+
+  const handleShare = async (name: string) => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, url });
+      } catch {
+        // user cancelled the share sheet — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Could not copy link");
+    }
   };
 
   // While the request is in flight we show a skeleton — never placeholder
@@ -135,6 +163,11 @@ export default function ProductDetail() {
     p.productImages?.map((i) => i.url) ||
     (p.productImage ? [p.productImage] : []);
 
+  const spinFrames = [...(p.rotationImages || [])]
+    .sort((a, b) => a.order - b.order)
+    .map((f) => f.url)
+    .filter(Boolean);
+
   return (
     <div className="container pdp">
       <button className="back-link" onClick={() => navigate(-1)}>
@@ -144,24 +177,91 @@ export default function ProductDetail() {
       <div className="pdp-card">
       <div className="pdp-grid">
         <div className="pdp-image">
-          {images[activeImg] ? (
-            <img src={images[activeImg]} alt={p.productName} />
-          ) : (
-            <div className="empty" style={{ aspectRatio: "1/1" }}>No image</div>
-          )}
-          {images.length > 1 && (
-            <div className="pdp-thumbs">
-              {images.map((src, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImg(i)}
-                  className={i === activeImg ? "active" : ""}
-                >
-                  <img src={src} alt="" />
-                </button>
-              ))}
+          <div className="pdp-gallery">
+            {images.length > 1 && (
+              <div className="pdp-thumbs">
+                {images.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={i === activeImg ? "active" : ""}
+                  >
+                    <img src={src} alt="" />
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="pdp-main-image">
+              {model3dMode && p.model3dUrl ? (
+                <Suspense fallback={<div className="model3d-loading">Loading 3D viewer…</div>}>
+                  <Model3DViewer
+                    src={p.model3dUrl}
+                    iosSrc={p.arModelUrl}
+                    alt={p.productName}
+                    onClose={() => setModel3dMode(false)}
+                  />
+                </Suspense>
+              ) : spinMode && spinFrames.length > 0 ? (
+                <Spin360Viewer
+                  frames={spinFrames}
+                  onClose={() => setSpinMode(false)}
+                />
+              ) : (
+                <>
+                  {images[activeImg] ? (
+                    <img src={images[activeImg]} alt={p.productName} />
+                  ) : (
+                    <div className="empty" style={{ aspectRatio: "1/1" }}>No image</div>
+                  )}
+                  <button
+                    type="button"
+                    className="pdp-share-btn"
+                    aria-label="Share this product"
+                    onClick={() => handleShare(p.productName)}
+                  >
+                    <FiShare2 />
+                  </button>
+                  <button
+                    type="button"
+                    className="pdp-360-btn"
+                    aria-label="360 degree view"
+                    onClick={() =>
+                      spinFrames.length > 0
+                        ? setSpinMode(true)
+                        : toast.info("360° view not available for this product")
+                    }
+                  >
+                    360
+                  </button>
+                  <button
+                    type="button"
+                    className="pdp-3d-btn"
+                    aria-label="View in 3D"
+                    onClick={() =>
+                      p.model3dUrl
+                        ? setModel3dMode(true)
+                        : toast.info("3D view not available for this product")
+                    }
+                  >
+                    <FiBox />
+                  </button>
+                </>
+              )}
+              {!spinMode && !model3dMode && images.length > 1 && (
+                <div className="pdp-dots">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={i === activeImg ? "active" : ""}
+                      aria-label={`Show image ${i + 1}`}
+                      onClick={() => setActiveImg(i)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         <div className="pdp-info">

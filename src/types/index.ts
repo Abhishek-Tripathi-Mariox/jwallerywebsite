@@ -20,6 +20,9 @@ export interface Product {
   productName: string;
   productImages?: { url: string }[];
   productImage?: string;
+  rotationImages?: { url: string; order: number }[];
+  model3dUrl?: string;
+  arModelUrl?: string;
   price: number;
   discountPrice?: number;
   discountPercent?: number;
