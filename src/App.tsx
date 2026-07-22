@@ -12,6 +12,7 @@ import OrderDetail from "./pages/OrderDetail";
 import Wishlist from "./pages/Wishlist";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import AccountDelete from "./pages/AccountDelete";
 import Addresses from "./pages/Addresses";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/account/delete" element={<AccountDelete />} />
           <Route path="/addresses" element={<Addresses />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />

@@ -75,6 +75,10 @@ export default function Profile() {
       >
         <FiLogOut /> Logout
       </button>
+
+      <Link to="/account/delete" className="profile-delete-account">
+        Delete my account
+      </Link>
     </div>
   );
 }

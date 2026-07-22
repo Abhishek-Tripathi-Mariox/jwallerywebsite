@@ -103,6 +103,15 @@
 }
 .profile-logout:hover { background: #fef2f2; }
 
+.profile-delete-account {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}
+
 @media (max-width: 720px) {
   .profile-tiles { grid-template-columns: 1fr; }
   .profile-banner { padding: 20px; gap: 14px; }

@@ -247,6 +247,8 @@ export const fetchProfile = () => unwrap<any>(api.get("/user/profile"));
 
 export const updateProfile = (data: any) => unwrap(api.put("/user/profile", data));
 
+export const deleteAccount = () => unwrap(api.delete("/user/account"));
+
 // Backend exposes this as a GET that flips the user's `notificationAllowed`
 // bit. Naming preserved for clarity at call sites.
 export const toggleNotificationSwitch = () =>
