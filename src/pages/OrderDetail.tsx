@@ -16,10 +16,12 @@ import "./OrderDetail.css";
 
 const fmt = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
+// Labels must match backend's statusLabels (OrderController.js) so the
+// same order shows the same wording in admin panel, mobile app, and here.
 const STATUS_FLOW = [
-  { n: 1, label: "Order Placed", icon: FiCheckCircle },
-  { n: 2, label: "Processing", icon: FiPackage },
-  { n: 3, label: "Shipped", icon: FiTruck },
+  { n: 1, label: "Order Received", icon: FiCheckCircle },
+  { n: 2, label: "Ready to Ship", icon: FiPackage },
+  { n: 3, label: "On the Way", icon: FiTruck },
   { n: 4, label: "Delivered", icon: FiCheckCircle },
 ];
 

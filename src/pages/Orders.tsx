@@ -17,20 +17,23 @@ interface Order {
   items?: any[];
 }
 
+// Labels must match backend's statusLabels (OrderController.js) so the same
+// order shows the same wording in admin panel, mobile app, and here. The
+// object keys themselves are just internal identifiers, not shown to users.
 const STATUS_META: Record<string, { label: string; icon: any; color: string }> = {
   delivered: { label: "Delivered", icon: FiCheckCircle, color: "var(--color-success)" },
-  in_transit: { label: "In Transit", icon: FiTruck, color: "var(--color-info)" },
-  shipped: { label: "Shipped", icon: FiTruck, color: "var(--color-info)" },
-  processing: { label: "Processing", icon: FiClock, color: "var(--color-warning)" },
-  pending: { label: "Pending", icon: FiClock, color: "var(--color-warning)" },
+  in_transit: { label: "On the Way", icon: FiTruck, color: "var(--color-info)" },
+  shipped: { label: "On the Way", icon: FiTruck, color: "var(--color-info)" },
+  processing: { label: "Ready to Ship", icon: FiClock, color: "var(--color-warning)" },
+  pending: { label: "Order Received", icon: FiClock, color: "var(--color-warning)" },
   cancelled: { label: "Cancelled", icon: FiClock, color: "var(--color-danger)" },
 };
 
 const STATUS_FILTERS: { key: string; label: string; matches: string[] }[] = [
   { key: "all", label: "All", matches: [] },
-  { key: "pending", label: "Pending", matches: ["pending"] },
-  { key: "processing", label: "Processing", matches: ["processing"] },
-  { key: "in_transit", label: "Shipped", matches: ["in_transit", "shipped"] },
+  { key: "pending", label: "Order Received", matches: ["pending"] },
+  { key: "processing", label: "Ready to Ship", matches: ["processing"] },
+  { key: "in_transit", label: "On the Way", matches: ["in_transit", "shipped"] },
   { key: "delivered", label: "Delivered", matches: ["delivered"] },
   { key: "cancelled", label: "Cancelled", matches: ["cancelled"] },
 ];
