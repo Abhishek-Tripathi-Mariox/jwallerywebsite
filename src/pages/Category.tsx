@@ -27,7 +27,7 @@ const PER_PAGE = 24;
 const isObjectId = (s?: string) => !!s && /^[a-f0-9]{24}$/i.test(s);
 
 // Fixed option lists (must match the values the admin product form offers).
-const MATERIALS = ["10% purity of 24K gold", "10% purity of 999 silver", "24K Gold", "999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
+const MATERIALS = ["22K Gold", "18K Gold", "Rose Gold", "Pearl", "Stone", "Diamond"];
 const BRANDS = ["Swarnaz"];
 
 type Cat = { _id: string; categoryName: string; image?: string };
