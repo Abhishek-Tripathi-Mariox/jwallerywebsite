@@ -1,0 +1,44 @@
+.store-locator-page {
+  padding: 24px 24px 64px;
+}
+.store-locator-intro {
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+}
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+.store-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 22px 24px;
+}
+.store-card h3 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+.store-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--color-text);
+}
+.store-row svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--color-text-muted);
+}
+.store-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.store-actions .btn {
+  padding: 10px 18px;
+  font-size: 13px;
+}

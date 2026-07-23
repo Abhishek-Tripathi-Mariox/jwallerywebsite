@@ -19,7 +19,8 @@ import CustomerReviews from "../components/shared/CustomerReviews";
 import ReelsStrip from "../components/shared/ReelsStrip";
 import BannerMedia, { isVideo } from "../components/shared/BannerMedia";
 import { FiArrowRight, FiPlay, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { FaShieldAlt, FaTruck, FaGem, FaExchangeAlt } from "react-icons/fa";
+import { FaGem } from "react-icons/fa";
+import { IoShieldCheckmarkOutline, IoInfiniteOutline, IoArrowUndoOutline } from "react-icons/io5";
 import { A } from "../assets/figma";
 import { hasToken } from "../lib/authGate";
 import { addToCartAction, toggleWishlistAction } from "../lib/cartActions";
@@ -445,15 +446,30 @@ export default function Home() {
           empty state) so the section is visible even before reviews exist. */}
       <CustomerReviews reviews={customerReviews} />
 
-      {/* Assurance */}
+      {/* Assurance — matches the mobile app's Assurance card */}
       <section className="section assurance">
         <div className="container">
-          <h2 className="section-title" style={{ justifyContent: "center" }}>Our Assurance 🛡️</h2>
-          <div className="grid grid-4 assure-grid">
-            <div className="assure-item"><FaShieldAlt /><h4>Quality Craftsmanship</h4><p>Hallmarked & certified</p></div>
-            <div className="assure-item"><FaTruck /><h4>Ethically Sourced</h4><p>Transparent supply chain</p></div>
-            <div className="assure-item"><FaGem /><h4>BIS Hallmark</h4><p>Certified pure gold</p></div>
-            <div className="assure-item"><FaExchangeAlt /><h4>Lifetime Exchange</h4><p>Easy buy-back policy</p></div>
+          <div className="assurance-card">
+            <h2 className="assurance-title">Assurance</h2>
+            <p className="assurance-subtitle">Crafted By Experts, Cherished By You</p>
+            <div className="assurance-grid">
+              <div className="assurance-item">
+                <span className="assurance-icon"><FaGem /></span>
+                <p>10% purity<br />of 24k Gold</p>
+              </div>
+              <div className="assurance-item">
+                <span className="assurance-icon"><IoShieldCheckmarkOutline /></span>
+                <p>5 years<br />warranty</p>
+              </div>
+              <div className="assurance-item">
+                <span className="assurance-icon"><IoInfiniteOutline /></span>
+                <p>Premiere<br />Design</p>
+              </div>
+              <div className="assurance-item">
+                <span className="assurance-icon"><IoArrowUndoOutline /></span>
+                <p>easy 3-5<br />Days return</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

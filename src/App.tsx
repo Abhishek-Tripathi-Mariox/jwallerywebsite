@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Contact from "./pages/Contact";
 import StaticPage from "./pages/StaticPage";
+import StoreLocator from "./pages/StoreLocator";
 import NotFound from "./pages/NotFound";
 import { useLogoStore } from "./store/logoStore";
 import Toaster from "./components/shared/Toaster";
@@ -74,22 +75,8 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/contact-us" element={<Contact />} />
+          <Route path="/store-locator" element={<StoreLocator />} />
           {/* CMS-driven static pages — admin publishes content per slug. */}
-          <Route
-            path="/store-locator"
-            element={
-              <StaticPage
-                slug="store-locator"
-                fallbackTitle="Store Locator"
-                fallbackBody={
-                  <p>
-                    Store locations will appear here soon. For directions or
-                    appointments, please use the Contact form.
-                  </p>
-                }
-              />
-            }
-          />
           <Route
             path="/about-us"
             element={<StaticPage slug="about-us" fallbackTitle="About Us" />}

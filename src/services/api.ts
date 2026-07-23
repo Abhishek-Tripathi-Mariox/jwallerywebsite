@@ -45,6 +45,22 @@ export const fetchSpecialOffers = () =>
 
 export const fetchSupportInfo = () => unwrap<any>(api.get("/user/support-info"));
 
+export interface Store {
+  _id: string;
+  name: string;
+  address: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  phone?: string;
+  whatsapp?: string;
+  workingHours?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export const fetchStores = () => unwrap<Store[]>(api.get("/user/stores"), []);
+
 export interface ContactSubmissionPayload {
   fullName?: string;
   email: string;
