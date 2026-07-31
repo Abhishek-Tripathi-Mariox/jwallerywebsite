@@ -174,3 +174,10 @@
   .login-card { padding: 24px 20px; }
   .otp-box { width: 42px; height: 42px; font-size: 18px; }
 }
+/* 6 boxes × 42px + 5×12px gaps + card padding = 352px, wider than a 320px
+   phone — shrink further so the row actually fits without overflowing. */
+@media (max-width: 360px) {
+  .login-card { padding: 24px 16px; }
+  .otp-row { gap: 8px; }
+  .otp-box { width: 36px; height: 36px; font-size: 16px; }
+}

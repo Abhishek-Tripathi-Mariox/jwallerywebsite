@@ -10,6 +10,12 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
+/* minmax(300px, ...) doesn't fit inside the ~272px available on a 320px
+   phone (page has 24px padding each side) — drop the floor below that. */
+@media (max-width: 380px) {
+  .store-locator-page { padding: 24px 16px 64px; }
+  .store-grid { grid-template-columns: 1fr; }
+}
 .store-card {
   background: #fff;
   border-radius: var(--radius);

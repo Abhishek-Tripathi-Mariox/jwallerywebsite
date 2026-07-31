@@ -18,11 +18,20 @@ interface CartItem {
   _id: string;        // line id when from server; productId when guest
   productId?: string; // guest snapshot helper
   quantity: number;
-  product?: any;
+  product?: any;       // populated for guest items only — the server never
+                        // populates this on logged-in carts (see itemPrice)
   productName?: string;
   price?: number;
+  unitPrice?: number;      // server items: original price, snapshotted at add-time
+  discountPrice?: number;  // server items: discounted price, snapshotted at add-time
   image?: string;
 }
+
+// Server (logged-in) cart items carry price flat on the item (unitPrice /
+// discountPrice); guest items carry it nested under `product` instead
+// (GuestProduct, see guestStore.ts). Check both shapes, discounted first.
+const itemPrice = (it: CartItem) =>
+  it.discountPrice || it.product?.discountPrice || it.unitPrice || it.product?.price || 0;
 
 const fmt = (n: number) => `₹${Number(n).toLocaleString("en-IN")}`;
 
@@ -76,8 +85,7 @@ export default function Cart() {
   }, [items, setCartCount]);
 
   const subtotal = items.reduce((s, it) => {
-    const p = it.product?.discountPrice || it.product?.price || it.price || 0;
-    return s + p * (it.quantity || 1);
+    return s + itemPrice(it) * (it.quantity || 1);
   }, 0);
 
   // Logged-in users trust the server breakdown; guests get a local estimate
@@ -149,7 +157,7 @@ export default function Cart() {
             {items.map((it) => {
               const prod = it.product || it;
               const img = prod?.productImages?.[0]?.url || prod?.productImage || it.image;
-              const price = prod?.discountPrice || prod?.price || it.price || 0;
+              const price = itemPrice(it);
               return (
                 <div key={it._id} className="cart-item card">
                   <div className="cart-item-img">

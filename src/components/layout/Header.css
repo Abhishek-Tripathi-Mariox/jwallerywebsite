@@ -123,15 +123,21 @@
 
 /* ---------- Notification dropdown ---------- */
 .notif-wrap {
-  position: relative;
+  /* Deliberately not a positioning context — .notif-panel anchors to
+     .site-header (position: sticky, full viewport width) instead, so the
+     dropdown's right edge lines up with the actual screen edge regardless of
+     where the bell icon sits among the other header-action icons. Anchoring
+     to this narrow wrapper instead pushed the panel ~100px off the left edge
+     of the screen on mobile, since the bell isn't the rightmost icon. */
 }
 
 .notif-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   right: 0;
   width: 360px;
-  max-width: 92vw;
+  max-width: calc(100vw - 24px);
+  margin: 8px 12px 0 0;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -317,6 +323,6 @@
 @media (max-width: 480px) {
   .utility-bar { font-size: 11px; }
   .utility-right { gap: 14px; }
-  .header-actions { gap: 2px; }
-  .icon-btn { width: 36px; height: 36px; font-size: 16px; }
+  .header-actions { gap: 6px; }
+  .icon-btn { width: 40px; height: 40px; font-size: 17px; }
 }

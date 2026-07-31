@@ -153,6 +153,7 @@ export const fetchProductsBrowse = (
     sortBy?: string;
     page?: number;
     limit?: number;
+    discounted?: boolean;
   } = {}
 ) => {
   const qs = new URLSearchParams();
@@ -164,6 +165,7 @@ export const fetchProductsBrowse = (
   if (opts.sortBy) qs.set("sortBy", opts.sortBy);
   if (opts.page) qs.set("page", String(opts.page));
   if (opts.limit) qs.set("limit", String(opts.limit));
+  if (opts.discounted) qs.set("discounted", "true");
   const tail = qs.toString() ? `?${qs}` : "";
   return unwrap<{ products: Product[]; total?: number }>(
     api.get(`/user/products/browse${tail}`),

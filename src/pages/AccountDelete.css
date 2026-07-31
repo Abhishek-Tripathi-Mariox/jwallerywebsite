@@ -2,6 +2,10 @@
   padding: 24px 24px 64px;
   max-width: 720px;
 }
+@media (max-width: 480px) {
+  .account-delete-page { padding: 24px 16px 56px; }
+  .account-delete-card { padding: 20px; }
+}
 .account-delete-intro {
   color: var(--color-text-muted, #666);
   margin-bottom: 24px;
@@ -35,6 +39,7 @@
 .account-delete-action {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
 }
 .account-delete-btn {

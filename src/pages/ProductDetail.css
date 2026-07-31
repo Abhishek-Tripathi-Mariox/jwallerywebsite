@@ -230,6 +230,17 @@
 }
 .pdp-actions .btn { flex: 1; min-width: 160px; }
 
+/* Below ~480px, "Buy Now" + "Add to Cart" (each min-width:160px) no longer
+   fit two-up, so they wrap one-per-line and leave the wishlist icon stranded
+   alone on a third line. Reflow into: [heart][Add to Cart] on row one, "Buy
+   Now" full-width and prominent on row two. */
+@media (max-width: 480px) {
+  .pdp-actions .btn { min-width: 0; }
+  .pdp-actions .btn-outline-primary { order: 1; flex: 1; }
+  .pdp-actions .btn-icon { order: 2; flex-shrink: 0; }
+  .pdp-actions .btn-primary { order: 3; flex-basis: 100%; }
+}
+
 /* Skeleton loading state — shimmering placeholders shown while the product
    request is in flight (replaces the old static "Product 1" fallback). */
 .sk {

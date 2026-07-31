@@ -80,6 +80,33 @@
   background: var(--color-primary);
 }
 
+/* Horizontal steps only fit ~2 per row below 480px, and the connector bar
+   (sized for a horizontal gap) ends up an orphaned sliver wherever the wrap
+   lands. Switch to a vertical stepper: steps stack, and the bar becomes an
+   absolutely-positioned line running down from each dot to the next one. */
+@media (max-width: 480px) {
+  .od-tracker { flex-direction: column; align-items: stretch; gap: 0; }
+  .od-track-step {
+    flex: none;
+    min-width: 0;
+    width: 100%;
+    align-items: flex-start;
+    padding-bottom: 26px;
+    position: relative;
+  }
+  .od-track-step:last-child { padding-bottom: 0; }
+  .od-track-label { white-space: normal; padding-top: 7px; }
+  .od-track-bar {
+    position: absolute;
+    left: 17px;
+    top: 36px;
+    bottom: 0;
+    width: 2px;
+    height: auto;
+    margin: 0;
+  }
+}
+
 .od-cancelled {
   margin-top: 10px;
   padding: 12px 14px;
@@ -107,6 +134,10 @@
   padding: 12px;
   border: 1px solid #f1f5f9;
   border-radius: 12px;
+}
+@media (max-width: 420px) {
+  .od-item { grid-template-columns: 56px 1fr auto; gap: 10px; padding: 10px; }
+  .od-item-img { width: 56px; height: 56px; }
 }
 
 .od-item-img {

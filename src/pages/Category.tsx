@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   fetchProductsBrowse,
@@ -27,8 +27,10 @@ const PER_PAGE = 24;
 const isObjectId = (s?: string) => !!s && /^[a-f0-9]{24}$/i.test(s);
 
 // Fixed option lists (must match the values the admin product form offers).
-const MATERIALS = ["22K Gold", "18K Gold", "Rose Gold", "Pearl", "Stone", "Diamond"];
+const MATERIALS = ["22K Gold", "18K Gold", "24K Gold", "999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
 const BRANDS = ["Swarnaz"];
+const GOLD_MATERIALS = ["22K Gold", "18K Gold", "24K Gold", "Rose Gold"];
+const SILVER_MATERIALS = ["999 Silver"];
 
 type Cat = { _id: string; categoryName: string; image?: string };
 
@@ -48,10 +50,26 @@ export default function Category() {
       new URLSearchParams(window.location.search).get("category") ||
       "";
 
+  // Header/Home nav links to "Gold", "Silver", "New Arrivals", "Offers" pass
+  // these as either /category/<slug> (legacy path) or /shop?material=...&
+  // discounted=...&sort=... (query form) — accept both so nothing silently
+  // falls through to an unfiltered "all products" list.
+  const rawSlug = !isObjectId(id) && id ? id : "";
+  const materialParam = (
+    searchParams.get("material") ||
+    (rawSlug === "gold" || rawSlug === "silver" ? rawSlug : "")
+  ).toLowerCase();
+  const discountedParam =
+    searchParams.get("discounted") === "true" || rawSlug === "offers";
+  const sortParam =
+    searchParams.get("sort") || (rawSlug === "new-arrivals" ? "newest" : "");
+  const materialsForParam = (param: string): string[] =>
+    param === "gold" ? GOLD_MATERIALS : param === "silver" ? SILVER_MATERIALS : [];
+
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [sort, setSort] = useState("newest");
+  const [sort, setSort] = useState(sortParam || "newest");
   const [page, setPage] = useState(1);
 
   // Real categories drive the sidebar filter; the URL category is pre-checked.
@@ -59,8 +77,11 @@ export default function Category() {
   const [selCatIds, setSelCatIds] = useState<Set<string>>(
     () => (activeCatId ? new Set([activeCatId]) : new Set())
   );
-  const [selMaterials, setSelMaterials] = useState<Set<string>>(new Set());
+  const [selMaterials, setSelMaterials] = useState<Set<string>>(
+    () => new Set(materialsForParam(materialParam))
+  );
   const [selBrands, setSelBrands] = useState<Set<string>>(new Set());
+  const [discountOnly, setDiscountOnly] = useState<boolean>(discountedParam);
   // The category the user navigated to — drives the hero title + banner image.
   const [activeCategory, setActiveCategory] = useState<Cat | null>(null);
 
@@ -68,6 +89,24 @@ export default function Category() {
   const [minInput, setMinInput] = useState("");
   const [maxInput, setMaxInput] = useState("");
   const [priceFilter, setPriceFilter] = useState<{ min?: number; max?: number }>({});
+
+  // "Shop Now" in the hero scrolls down to the product grid, already loaded
+  // on this same page — there's nowhere else for it to navigate to.
+  const productsRef = useRef<HTMLDivElement | null>(null);
+  const scrollToProducts = () => productsRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  // Quick-filter buttons above the product list — force the matching
+  // (possibly collapsed, on mobile) sidebar group open and scroll to it.
+  const categoriesGroupRef = useRef<FilterGroupHandle | null>(null);
+  const materialGroupRef = useRef<FilterGroupHandle | null>(null);
+  const brandGroupRef = useRef<FilterGroupHandle | null>(null);
+  const priceGroupRef = useRef<FilterGroupHandle | null>(null);
+  const jumpToFilter = (ref: React.RefObject<FilterGroupHandle | null>) => {
+    ref.current?.open();
+    requestAnimationFrame(() =>
+      ref.current?.el?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
 
   // Load the category list once for the sidebar.
   useEffect(() => {
@@ -99,6 +138,29 @@ export default function Category() {
     }
   }, [activeCatId]);
 
+  // Same idea as activeCatId above, for the nav-driven material/offers/sort
+  // presets — re-apply when the user clicks a different header link while
+  // already on this page (client-side routing won't remount the component).
+  const lastMaterialRef = useRef(materialParam);
+  const lastDiscountedRef = useRef(discountedParam);
+  const lastSortRef = useRef(sortParam);
+  useEffect(() => {
+    if (materialParam !== lastMaterialRef.current) {
+      lastMaterialRef.current = materialParam;
+      setPage(1);
+      setSelMaterials(new Set(materialsForParam(materialParam)));
+    }
+    if (discountedParam !== lastDiscountedRef.current) {
+      lastDiscountedRef.current = discountedParam;
+      setPage(1);
+      setDiscountOnly(discountedParam);
+    }
+    if (sortParam && sortParam !== lastSortRef.current) {
+      lastSortRef.current = sortParam;
+      setSort(sortParam);
+    }
+  }, [materialParam, discountedParam, sortParam]);
+
   // Re-fetch whenever filters change. The public browse endpoint works for
   // guests, so products show whether or not the visitor is logged in.
   useEffect(() => {
@@ -112,13 +174,14 @@ export default function Category() {
       sortBy: sort,
       page,
       limit: PER_PAGE,
+      discounted: discountOnly,
     }).then((res: any) => {
       const d = res?.data;
       setProducts(asList<any>(d).map(normalizeProduct));
       setTotal(typeof d?.total === "number" ? d.total : asList<any>(d).length);
       setLoading(false);
     });
-  }, [selCatIds, selMaterials, selBrands, priceFilter, sort, page]);
+  }, [selCatIds, selMaterials, selBrands, priceFilter, sort, page, discountOnly]);
 
   const onAdd = async (p: Product) => {
     const r = await addToCartAction(p, 1);
@@ -171,8 +234,18 @@ export default function Category() {
     setPriceFilter({});
   };
 
+  const presetTitle =
+    materialParam === "gold"
+      ? "Gold Jewellery"
+      : materialParam === "silver"
+      ? "Silver Jewellery"
+      : discountedParam
+      ? "Offers"
+      : sortParam === "newest"
+      ? "New Arrivals"
+      : "";
   const slugTitle = (id || "products").toString().replace(/-/g, " ");
-  const heroTitle = `Timeless ${activeCategory?.categoryName || slugTitle}`;
+  const heroTitle = `Timeless ${activeCategory?.categoryName || presetTitle || slugTitle}`;
   const heroImage = activeCategory?.image || A.banner.bridal;
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
 
@@ -189,13 +262,24 @@ export default function Category() {
           <div className="cat-hero-text">
             <h1>{heroTitle.toUpperCase()}</h1>
             <p>Discover handcrafted designs that celebrate timeless elegance — perfect for every occasion.</p>
-            <button className="btn btn-primary">Shop Now</button>
+            <button className="btn btn-primary" onClick={scrollToProducts}>Shop Now</button>
           </div>
         </section>
 
+        <h2 className="cat-title">Our Products</h2>
+
+        {/* Quick filter nav — jumps straight to a sidebar filter group,
+            which may be collapsed on mobile, instead of making users scroll
+            and expand it themselves. */}
+        <div className="cat-quick-filters">
+          <button type="button" onClick={() => jumpToFilter(categoriesGroupRef)}>Categories</button>
+          <button type="button" onClick={() => jumpToFilter(materialGroupRef)}>Material</button>
+          <button type="button" onClick={() => jumpToFilter(brandGroupRef)}>Brand</button>
+          <button type="button" onClick={() => jumpToFilter(priceGroupRef)}>Price Range</button>
+        </div>
+
         {/* Title bar */}
         <div className="cat-toolbar">
-          <h2 className="cat-title">Our Products</h2>
           <div className="cat-toolbar-right">
             <span className="cat-count">{total} items</span>
             <label className="cat-sort">
@@ -210,10 +294,10 @@ export default function Category() {
           </div>
         </div>
 
-        <div className="cat-layout">
+        <div className="cat-layout" ref={productsRef}>
           {/* Sidebar */}
           <aside className="cat-sidebar">
-            <FilterGroup title="Categories">
+            <FilterGroup title="Categories" ref={categoriesGroupRef}>
               {allCategories.length === 0 ? (
                 <span className="filter-empty">Loading…</span>
               ) : (
@@ -230,7 +314,7 @@ export default function Category() {
               )}
             </FilterGroup>
 
-            <FilterGroup title="Material">
+            <FilterGroup title="Material" ref={materialGroupRef}>
               {MATERIALS.map((m) => (
                 <label key={m} className="filter-row">
                   <input
@@ -243,7 +327,7 @@ export default function Category() {
               ))}
             </FilterGroup>
 
-            <FilterGroup title="Brand">
+            <FilterGroup title="Brand" ref={brandGroupRef}>
               {BRANDS.map((b) => (
                 <label key={b} className="filter-row">
                   <input
@@ -256,7 +340,7 @@ export default function Category() {
               ))}
             </FilterGroup>
 
-            <FilterGroup title="Price Range">
+            <FilterGroup title="Price Range" ref={priceGroupRef}>
               <div className="filter-price">
                 <div className="filter-price-inputs">
                   <input
@@ -341,10 +425,34 @@ export default function Category() {
   );
 }
 
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+export interface FilterGroupHandle {
+  open: () => void;
+  el: HTMLDivElement | null;
+}
+
+const FilterGroup = forwardRef<
+  FilterGroupHandle,
+  { title: string; children: React.ReactNode }
+>(function FilterGroup({ title, children }, ref) {
+  // Collapsed by default on mobile (sidebar renders above the product grid
+  // there, per Category.css's 820px breakpoint) so users see products sooner
+  // instead of scrolling past four open filter groups first.
+  const [open, setOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth > 820,
+  );
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  // Lets the quick-filter buttons above the product list force this group
+  // open (it may currently be collapsed on mobile) and scroll to it.
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+    get el() {
+      return wrapRef.current;
+    },
+  }));
+
   return (
-    <div className="filter-group">
+    <div className="filter-group" ref={wrapRef}>
       <button className="filter-head" onClick={() => setOpen((o) => !o)}>
         <span>{title}</span>
         <FiChevronDown style={{ transform: open ? "rotate(180deg)" : "none" }} />
@@ -352,4 +460,4 @@ function FilterGroup({ title, children }: { title: string; children: React.React
       {open && <div className="filter-body">{children}</div>}
     </div>
   );
-}
+});

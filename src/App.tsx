@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
@@ -50,10 +50,24 @@ function useApplyBrandAssets() {
   }, [byType.primary?.title, byType.favicon?.title]);
 }
 
+// React Router doesn't reset scroll position on navigation the way a
+// traditional multi-page site does — without this, clicking a product from
+// partway down the home page (or any link clicked mid-scroll) lands on the
+// new page at that same scroll offset, which can put you at the bottom of a
+// shorter page instead of the top.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   useApplyBrandAssets();
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <ScrollToTop />
       <Header />
       <main style={{ flex: 1 }}>
         <Routes>

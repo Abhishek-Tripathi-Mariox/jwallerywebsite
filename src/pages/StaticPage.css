@@ -34,6 +34,10 @@
 .static-page-content ol { padding-left: 22px; margin: 0 0 12px; }
 .static-page-content a { color: var(--color-primary); text-decoration: underline; }
 .static-page-content img { max-width: 100%; height: auto; border-radius: 8px; }
+/* Admin-authored HTML can contain a wide table or preformatted block — wrap
+   the scroll at the element itself so it can't push the whole page wider. */
+.static-page-content table { display: block; max-width: 100%; overflow-x: auto; }
+.static-page-content pre { max-width: 100%; overflow-x: auto; }
 
 .static-page-fallback {
   background: #fff8e1;

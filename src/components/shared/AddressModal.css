@@ -196,3 +196,11 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* At 320-375px the modal's usable width (~244px after overlay + modal
+   padding) leaves each of the two .addr-row fields (e.g. City/State) only
+   ~117px — too tight to use. Stack them instead. */
+@media (max-width: 380px) {
+  .addr-modal { padding: 24px 16px 16px; }
+  .addr-row { grid-template-columns: 1fr; }
+}

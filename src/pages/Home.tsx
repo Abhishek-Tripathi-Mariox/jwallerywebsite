@@ -467,7 +467,7 @@ export default function Home() {
               </div>
               <div className="assurance-item">
                 <span className="assurance-icon"><IoArrowUndoOutline /></span>
-                <p>easy 3-5<br />Days return</p>
+                <p>Easy Returns<br /> in 3-5 Days</p>
               </div>
             </div>
           </div>

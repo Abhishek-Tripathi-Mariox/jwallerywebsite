@@ -113,7 +113,12 @@ export default function Checkout() {
   const selected = addresses.find((a) => a._id === selectedId) || null;
 
   const subtotal = items.reduce((s, it) => {
-    const p = it.product?.discountPrice || it.product?.price || it.unitPrice || 0;
+    // The cart API returns items flat (no populated `product` sub-object —
+    // it.product is always undefined), with the discounted price already
+    // snapshotted onto the item itself at add-to-cart time. Checking
+    // it.product?.* first meant this always fell through to unitPrice, the
+    // ORIGINAL price, silently overcharging on every discounted item.
+    const p = it.discountPrice || it.unitPrice || 0;
     return s + p * (it.quantity || 1);
   }, 0);
   // Prepaid (online) orders get an automatic, admin-configured % discount.
@@ -405,7 +410,7 @@ export default function Checkout() {
             {items.map((it) => {
               const prod = it.product || {};
               const img = prod.productImages?.[0]?.url || it.productImage;
-              const price = prod.discountPrice || prod.price || it.unitPrice || 0;
+              const price = it.discountPrice || it.unitPrice || 0;
               return (
                 <div key={it._id} className="summary-item">
                   <div className="summary-item-img">

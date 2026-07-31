@@ -122,9 +122,16 @@ h1, h2, h3, h4 {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .grid-5, .grid-4, .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-5, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid { gap: 16px; }
   .section { padding: 24px 0; }
   .section-title { font-size: 22px; }
+}
+/* Two product-card columns get too cramped below ~420px (image + name +
+   price + add-to-cart button all fighting for ~130px) — go to one column. */
+@media (max-width: 420px) {
+  .grid-5, .grid-4 { grid-template-columns: 1fr; }
 }
 
 .card {
