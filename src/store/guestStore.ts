@@ -13,6 +13,7 @@ export interface GuestProduct {
   productImage?: string;
   price: number;
   discountPrice?: number;
+  computedPrice?: number; // live gold-rate price, see util/goldPricing.js on the backend
   mrp?: number;
 }
 

@@ -255,7 +255,8 @@ export default function Orders() {
                   <h4>Order #{o.orderId}</h4>
                   <div className="order-meta">Placed on {o.createdAt}</div>
                   <div className="order-meta">
-                    {o.itemCount} item{(o.itemCount || 0) !== 1 ? "s" : ""} • {fmt(o.totalAmount || 0)}
+                    {o.itemCount} item{(o.itemCount || 0) !== 1 ? "s" : ""} •{" "}
+                    <span className="order-price">{fmt(o.totalAmount || 0)}</span>
                   </div>
                 </div>
                 <div className="order-side">

@@ -31,7 +31,12 @@ interface CartItem {
 // discountPrice); guest items carry it nested under `product` instead
 // (GuestProduct, see guestStore.ts). Check both shapes, discounted first.
 const itemPrice = (it: CartItem) =>
-  it.discountPrice || it.product?.discountPrice || it.unitPrice || it.product?.price || 0;
+  it.discountPrice ||
+  it.product?.computedPrice ||
+  it.product?.discountPrice ||
+  it.unitPrice ||
+  it.product?.price ||
+  0;
 
 const fmt = (n: number) => `₹${Number(n).toLocaleString("en-IN")}`;
 

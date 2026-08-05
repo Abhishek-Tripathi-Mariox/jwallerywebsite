@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiArrowRight } from "react-icons/fi";
 import { bannerImage } from "../../services/api";
 import { A } from "../../assets/figma";
 import BannerMedia, { isVideo } from "./BannerMedia";
@@ -55,10 +56,10 @@ export default function HeroCarousel({
           )}
           <h1>{current.title}</h1>
           <button
-            className="btn btn-outline"
+            className="btn btn-hero"
             onClick={() => navigate(current.link || "/category/new-arrivals")}
           >
-            SHOP NOW
+            SHOP NOW <FiArrowRight />
           </button>
         </div>
         <div className="hero-image">

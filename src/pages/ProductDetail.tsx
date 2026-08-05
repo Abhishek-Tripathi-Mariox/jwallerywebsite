@@ -363,15 +363,49 @@ export default function ProductDetail() {
               </>
             ) : (
               <>
-                <div className="spec-row">
-                  <span>Material</span>
-                  <strong>{(p as any).material || "—"}</strong>
-                </div>
+                {(p as any).material && (
+                  <div className="spec-row">
+                    <span>Material</span>
+                    <strong>{(p as any).material}</strong>
+                  </div>
+                )}
                 <div className="spec-row">
                   <span>Purity</span>
                   <strong>BIS Hallmarked</strong>
                 </div>
               </>
+            )}
+            {/* Additional details — each row hides itself when the field is
+                empty rather than leaving a blank line (per spec). */}
+            {(p as any).sku && (
+              <div className="spec-row">
+                <span>Product Code</span>
+                <strong>{(p as any).sku}</strong>
+              </div>
+            )}
+            {(p as any).dimensions && (
+              <div className="spec-row">
+                <span>Dimensions</span>
+                <strong>{(p as any).dimensions}</strong>
+              </div>
+            )}
+            {(p as any).occasion && (
+              <div className="spec-row">
+                <span>Occasion</span>
+                <strong>{(p as any).occasion}</strong>
+              </div>
+            )}
+            {(p as any).collectionName && (
+              <div className="spec-row">
+                <span>Collection</span>
+                <strong>{(p as any).collectionName}</strong>
+              </div>
+            )}
+            {(p as any).careInstructions && (
+              <div className="spec-row">
+                <span>Care Instructions</span>
+                <strong>{(p as any).careInstructions}</strong>
+              </div>
             )}
           </div>
 

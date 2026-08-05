@@ -56,8 +56,10 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  min-width: 100px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .orders-pill:hover {
   background: #fafafa;
@@ -67,6 +69,10 @@
   background: var(--color-primary);
   color: #fff;
   border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+@media (max-width: 480px) {
+  .orders-pill { min-width: 84px; padding: 6px 10px; font-size: 12px; }
 }
 .orders-pill.clear {
   border-color: #fecaca;
@@ -124,6 +130,11 @@
   font-size: 13px;
   color: var(--color-text-muted);
   margin-bottom: 2px;
+}
+.order-price {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
 }
 .order-side {
   display: flex;

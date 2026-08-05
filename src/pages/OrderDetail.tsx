@@ -99,7 +99,10 @@ export default function OrderDetail() {
       ? order.status
       : Number(order.status) || 1;
   const isCancelled = numericStatus === 5;
-  const canCancel = !isCancelled && numericStatus < 4;
+  // Mirrors backend OrderService.cancelOrder, which rejects status >= 3
+  // (On the Way / Delivered / Cancelled) — showing the button for status 3
+  // just meant every click on a shipped order failed with a server error.
+  const canCancel = !isCancelled && numericStatus < 3;
   const addr = order.addressId || order.address || {};
   const products: any[] = order.products || order.items || [];
 

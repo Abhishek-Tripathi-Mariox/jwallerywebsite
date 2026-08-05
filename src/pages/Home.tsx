@@ -28,6 +28,12 @@ import { toast } from "../store/toastStore";
 import "./Home.css";
 
 
+// "Trending Now" reuses the featured catalog but leads with the biggest
+// discounts, so it reads as a distinct list from "Best Seller Products"
+// (which keeps the backend's newest-first order) instead of duplicating it.
+const sortByDiscountDesc = (list: Product[]) =>
+  [...list].sort((a, b) => (b.discountPercent || 0) - (a.discountPercent || 0));
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -67,7 +73,7 @@ export default function Home() {
           if (d.featuredProducts) {
             const list = d.featuredProducts.map(normalizeProduct);
             setFeatured(list);
-            setTrending(list);
+            setTrending(sortByDiscountDesc(list));
           }
           if (d.banners) setBanners(d.banners);
           if (d.liveGoldPrice) setGoldPrices(d.liveGoldPrice);
@@ -86,8 +92,8 @@ export default function Home() {
       setBanners(asList<any>(bans?.data));
       setGoldPrices(asList<any>(prices?.data));
       const offerList = asList<any>(offers?.data).map(normalizeProduct);
-      setTrending(offerList);
       setFeatured(offerList);
+      setTrending(sortByDiscountDesc(offerList));
     })();
   }, []);
 
@@ -134,6 +140,7 @@ export default function Home() {
   const onWish = async (p: Product) => {
     const r = await toggleWishlistAction(p);
     if (!r.ok) toast.error(r.message || "Could not update wishlist");
+    else toast.success(r.wishlisted ? "Added to Wishlist" : "Removed from Wishlist");
   };
 
   return (
@@ -169,10 +176,10 @@ export default function Home() {
                 handcrafted in 22K gold and brilliant diamonds.
               </p>
               <button
-                className="btn btn-outline"
+                className="btn btn-hero"
                 onClick={() => navigate("/category/new-arrivals")}
               >
-                SHOP NOW
+                SHOP NOW <FiArrowRight />
               </button>
             </div>
             <div className="hero-image">
@@ -266,7 +273,7 @@ export default function Home() {
           <div className="container">
             <h2 className="section-title">Trending Now 🔥</h2>
             <div className="grid grid-4">
-              {trendingList.slice(0, 4).map((p) => (
+              {trendingList.slice(0, 8).map((p) => (
                 <ProductCard key={p._id} product={p} onAdd={onAdd} onWishlist={onWish} />
               ))}
             </div>
@@ -305,7 +312,7 @@ export default function Home() {
               <Link to="/category/new-arrivals" className="see-all">See All <FiArrowRight /></Link>
             </h2>
             <div className="grid grid-4">
-              {newArrivalList.slice(0, 4).map((p) => (
+              {newArrivalList.slice(0, 8).map((p) => (
                 <ProductCard key={p._id} product={p} onAdd={onAdd} onWishlist={onWish} />
               ))}
             </div>
@@ -430,7 +437,7 @@ export default function Home() {
           <div className="container">
             <h2 className="section-title">Best Seller Products</h2>
             <div className="grid grid-4">
-              {bestSellers.slice(0, 4).map((p) => (
+              {bestSellers.slice(0, 8).map((p) => (
                 <ProductCard key={p._id} product={p} onAdd={onAdd} onWishlist={onWish} />
               ))}
             </div>

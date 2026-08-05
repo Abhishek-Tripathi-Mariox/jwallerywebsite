@@ -23,6 +23,7 @@ const toGuestProduct = (p: any): GuestProduct => ({
     undefined,
   price: Number(p.price) || 0,
   discountPrice: p.discountPrice != null ? Number(p.discountPrice) : undefined,
+  computedPrice: p.computedPrice != null ? Number(p.computedPrice) : undefined,
   mrp: p.mrp != null ? Number(p.mrp) : undefined,
 });
 

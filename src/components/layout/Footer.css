@@ -28,17 +28,17 @@
 }
 .socials {
   display: flex;
-  gap: 10px;
+  gap: 14px;
 }
 .socials a {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #fff8e7;
   display: grid;
   place-items: center;
   color: var(--color-primary);
-  font-size: 14px;
+  font-size: 18px;
   border: 1px solid #f0e6c8;
   transition: all 0.2s;
 }
