@@ -235,6 +235,31 @@ export const removeFromCart = (itemId: string) =>
 export const updateCartItem = (itemId: string, quantity: number) =>
   unwrap(api.put(`/user/cart/${itemId}`, { quantity }));
 
+// ---------- Coupons ----------
+
+export interface CouponSummary {
+  _id: string;
+  code: string;
+  title: string;
+  description?: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  maxDiscountAmount?: number | null;
+  minOrderValue?: number;
+  isApplicable: boolean;
+}
+
+export const fetchCoupons = () =>
+  unwrap<CouponSummary[]>(api.get("/user/coupons"), []);
+
+export const applyCoupon = (couponCode: string) =>
+  unwrap<{ cart: any; coupon: { code: string; discountAmount: number } }>(
+    api.post("/user/cart/apply-coupon", { couponCode })
+  );
+
+export const removeCoupon = () =>
+  unwrap(api.delete("/user/cart/remove-coupon"));
+
 // ---------- Auth ----------
 
 // Backend expects { countryCode, mobileNumber } and responds with { txnId }.
@@ -306,6 +331,8 @@ export interface PublicChargesConfig {
   platformFeePercent: number;
   prepaidDiscountActive: boolean;
   prepaidDiscountPercent: number;
+  gstActive: boolean;
+  gstPercent: number;
 }
 
 export const fetchChargesConfig = () =>
@@ -318,6 +345,8 @@ export const fetchChargesConfig = () =>
     platformFeePercent: 0,
     prepaidDiscountActive: false,
     prepaidDiscountPercent: 0,
+    gstActive: false,
+    gstPercent: 0,
   });
 
 // Mirror of backend math, used as a fallback when we only have a subtotal
@@ -326,7 +355,7 @@ export const computeChargesLocal = (
   subtotal: number,
   couponDiscount: number,
   cfg: PublicChargesConfig,
-): { shipping: number; platformFee: number; total: number } => {
+): { shipping: number; platformFee: number; gst: number; total: number } => {
   const effective = Math.max(0, subtotal - couponDiscount);
   const shipping = cfg.shippingActive
     ? effective >= (cfg.freeShippingThreshold || 0)
@@ -338,7 +367,8 @@ export const computeChargesLocal = (
         Math.max(cfg.platformFeeFlat || 0, ((cfg.platformFeePercent || 0) * effective) / 100),
       )
     : 0;
-  return { shipping, platformFee, total: effective + shipping + platformFee };
+  const gst = cfg.gstActive ? Math.round(((cfg.gstPercent || 0) * effective) / 100) : 0;
+  return { shipping, platformFee, gst, total: effective + shipping + platformFee + gst };
 };
 
 export const placeOrder = (data: unknown) => unwrap(api.post("/user/orders", data));
@@ -410,6 +440,8 @@ export function normalizeProduct(p: any): Product {
     ...(p.computedPrice != null ? { computedPrice: p.computedPrice } : {}),
     ...(p.goldBreakdown ? { goldBreakdown: p.goldBreakdown } : {}),
     ...(p.goldPricing ? { goldPricing: p.goldPricing } : {}),
+    ...(p.categoryId ? { categoryId: String(p.categoryId) } : {}),
+    ...(p.material ? { material: p.material } : {}),
   } as unknown as Product;
 }
 

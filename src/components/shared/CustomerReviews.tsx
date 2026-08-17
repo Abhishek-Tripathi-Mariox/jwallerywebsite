@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Review = {
   _id?: string;
@@ -50,6 +50,25 @@ export default function CustomerReviews({ reviews }: { reviews: Review[] }) {
 
   const cardBasis = useMemo(() => `${100 / perPage}%`, [perPage]);
 
+  // Swipe support — the prev/next buttons are hidden below 640px (Home.css),
+  // and the track is transform-driven rather than a native scroll surface,
+  // so there was previously no way to change pages by touch at all.
+  const touchStartX = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    const SWIPE_THRESHOLD = 40;
+    if (deltaX <= -SWIPE_THRESHOLD) {
+      setPage((p) => (p + 1) % pageCount);
+    } else if (deltaX >= SWIPE_THRESHOLD) {
+      setPage((p) => (p - 1 + pageCount) % pageCount);
+    }
+  };
+
   return (
     <section className="section customer-view">
       <div className="container">
@@ -71,7 +90,11 @@ export default function CustomerReviews({ reviews }: { reviews: Review[] }) {
               </button>
             )}
 
-            <div className="cv-viewport">
+            <div
+              className="cv-viewport"
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            >
               <div
                 className="cv-track"
                 style={{ transform: `translateX(-${page * 100}%)` }}

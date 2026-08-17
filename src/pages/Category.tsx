@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import {
   fetchProductsBrowse,
@@ -27,9 +27,13 @@ const PER_PAGE = 24;
 const isObjectId = (s?: string) => !!s && /^[a-f0-9]{24}$/i.test(s);
 
 // Fixed option lists (must match the values the admin product form offers).
-const MATERIALS = ["22K Gold", "18K Gold", "24K Gold", "999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
-const BRANDS = ["Swarnaz"];
-const GOLD_MATERIALS = ["22K Gold", "18K Gold", "24K Gold", "Rose Gold"];
+// Gold items are gold-plated brass (~10% actual gold) — plain "22K/18K/24K
+// Gold" overstated purity and implied a BIS Hallmark that doesn't apply to
+// plated base-metal jewellery, so each karat tier is now framed as the
+// plating grade instead of a solid-gold purity claim.
+const GOLD_KARAT_MATERIALS = ["10% of 24K Gold", "10% of 22K Gold", "10% of 18K Gold"];
+const MATERIALS = [...GOLD_KARAT_MATERIALS, "999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
+const GOLD_MATERIALS = [...GOLD_KARAT_MATERIALS, "Rose Gold"];
 const SILVER_MATERIALS = ["999 Silver"];
 
 type Cat = { _id: string; categoryName: string; image?: string };
@@ -80,7 +84,6 @@ export default function Category() {
   const [selMaterials, setSelMaterials] = useState<Set<string>>(
     () => new Set(materialsForParam(materialParam))
   );
-  const [selBrands, setSelBrands] = useState<Set<string>>(new Set());
   const [discountOnly, setDiscountOnly] = useState<boolean>(discountedParam);
   // The category the user navigated to — drives the hero title + banner image.
   const [activeCategory, setActiveCategory] = useState<Cat | null>(null);
@@ -94,19 +97,6 @@ export default function Category() {
   // on this same page — there's nowhere else for it to navigate to.
   const productsRef = useRef<HTMLDivElement | null>(null);
   const scrollToProducts = () => productsRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  // Quick-filter buttons above the product list — force the matching
-  // (possibly collapsed, on mobile) sidebar group open and scroll to it.
-  const categoriesGroupRef = useRef<FilterGroupHandle | null>(null);
-  const materialGroupRef = useRef<FilterGroupHandle | null>(null);
-  const brandGroupRef = useRef<FilterGroupHandle | null>(null);
-  const priceGroupRef = useRef<FilterGroupHandle | null>(null);
-  const jumpToFilter = (ref: React.RefObject<FilterGroupHandle | null>) => {
-    ref.current?.open();
-    requestAnimationFrame(() =>
-      ref.current?.el?.scrollIntoView({ behavior: "smooth", block: "start" }),
-    );
-  };
 
   // Load the category list once for the sidebar.
   useEffect(() => {
@@ -168,7 +158,6 @@ export default function Category() {
     fetchProductsBrowse({
       categoryIds: Array.from(selCatIds),
       materials: Array.from(selMaterials),
-      brands: Array.from(selBrands),
       ...(priceFilter.min != null ? { minPrice: priceFilter.min } : {}),
       ...(priceFilter.max != null ? { maxPrice: priceFilter.max } : {}),
       sortBy: sort,
@@ -181,7 +170,7 @@ export default function Category() {
       setTotal(typeof d?.total === "number" ? d.total : asList<any>(d).length);
       setLoading(false);
     });
-  }, [selCatIds, selMaterials, selBrands, priceFilter, sort, page, discountOnly]);
+  }, [selCatIds, selMaterials, priceFilter, sort, page, discountOnly]);
 
   const onAdd = async (p: Product) => {
     const r = await addToCartAction(p, 1);
@@ -268,14 +257,91 @@ export default function Category() {
 
         <h2 className="cat-title">Our Products</h2>
 
-        {/* Quick filter nav — jumps straight to a sidebar filter group,
-            which may be collapsed on mobile, instead of making users scroll
-            and expand it themselves. */}
-        <div className="cat-quick-filters">
-          <button type="button" onClick={() => jumpToFilter(categoriesGroupRef)}>Categories</button>
-          <button type="button" onClick={() => jumpToFilter(materialGroupRef)}>Material</button>
-          <button type="button" onClick={() => jumpToFilter(brandGroupRef)}>Brand</button>
-          <button type="button" onClick={() => jumpToFilter(priceGroupRef)}>Price Range</button>
+        {/* Filter bar — dropdowns instead of a sidebar, so the product grid
+            gets the full width and filters read top-to-bottom on mobile
+            without a separate collapsed rail. */}
+        <div className="cat-filter-bar">
+          <FilterDropdown title="Categories" badge={selCatIds.size}>
+            {allCategories.length === 0 ? (
+              <span className="filter-empty">Loading…</span>
+            ) : (
+              allCategories.map((c) => (
+                <label key={c._id} className="filter-row">
+                  <input
+                    type="checkbox"
+                    checked={selCatIds.has(c._id)}
+                    onChange={() => toggleCat(c._id)}
+                  />
+                  <span>{c.categoryName}</span>
+                </label>
+              ))
+            )}
+          </FilterDropdown>
+
+          <FilterDropdown title="Material" badge={selMaterials.size}>
+            {MATERIALS.map((m) => (
+              <label key={m} className="filter-row">
+                <input
+                  type="checkbox"
+                  checked={selMaterials.has(m)}
+                  onChange={() => toggleIn(setSelMaterials, m)}
+                />
+                <span>{m}</span>
+              </label>
+            ))}
+          </FilterDropdown>
+
+          <FilterDropdown
+            title="Price Range"
+            badge={priceFilter.min != null || priceFilter.max != null ? 1 : 0}
+          >
+            <div className="filter-price">
+              <div className="filter-price-inputs">
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  placeholder="Min ₹"
+                  value={minInput}
+                  onChange={(e) => setMinInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                  className="filter-price-input"
+                />
+                <span className="filter-price-sep">–</span>
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  placeholder="Max ₹ (no limit)"
+                  value={maxInput}
+                  onChange={(e) => setMaxInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                  className="filter-price-input"
+                />
+              </div>
+              <div className="filter-price-actions">
+                <button className="btn btn-primary btn-sm" onClick={applyPrice}>
+                  Apply
+                </button>
+                {(priceFilter.min != null || priceFilter.max != null) && (
+                  <button className="filter-price-clear" onClick={clearPrice}>
+                    Clear
+                  </button>
+                )}
+              </div>
+              {(priceFilter.min != null || priceFilter.max != null) && (
+                <p className="filter-price-summary">
+                  {priceFilter.min != null
+                    ? `₹${priceFilter.min.toLocaleString("en-IN")}`
+                    : "₹0"}
+                  {" – "}
+                  {priceFilter.max != null
+                    ? `₹${priceFilter.max.toLocaleString("en-IN")}`
+                    : "No limit"}
+                </p>
+              )}
+            </div>
+          </FilterDropdown>
         </div>
 
         {/* Title bar */}
@@ -294,170 +360,78 @@ export default function Category() {
           </div>
         </div>
 
-        <div className="cat-layout" ref={productsRef}>
-          {/* Sidebar */}
-          <aside className="cat-sidebar">
-            <FilterGroup title="Categories" ref={categoriesGroupRef}>
-              {allCategories.length === 0 ? (
-                <span className="filter-empty">Loading…</span>
-              ) : (
-                allCategories.map((c) => (
-                  <label key={c._id} className="filter-row">
-                    <input
-                      type="checkbox"
-                      checked={selCatIds.has(c._id)}
-                      onChange={() => toggleCat(c._id)}
-                    />
-                    <span>{c.categoryName}</span>
-                  </label>
-                ))
-              )}
-            </FilterGroup>
-
-            <FilterGroup title="Material" ref={materialGroupRef}>
-              {MATERIALS.map((m) => (
-                <label key={m} className="filter-row">
-                  <input
-                    type="checkbox"
-                    checked={selMaterials.has(m)}
-                    onChange={() => toggleIn(setSelMaterials, m)}
-                  />
-                  <span>{m}</span>
-                </label>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup title="Brand" ref={brandGroupRef}>
-              {BRANDS.map((b) => (
-                <label key={b} className="filter-row">
-                  <input
-                    type="checkbox"
-                    checked={selBrands.has(b)}
-                    onChange={() => toggleIn(setSelBrands, b)}
-                  />
-                  <span>{b}</span>
-                </label>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup title="Price Range" ref={priceGroupRef}>
-              <div className="filter-price">
-                <div className="filter-price-inputs">
-                  <input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    placeholder="Min ₹"
-                    value={minInput}
-                    onChange={(e) => setMinInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                    className="filter-price-input"
-                  />
-                  <span className="filter-price-sep">–</span>
-                  <input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    placeholder="Max ₹ (no limit)"
-                    value={maxInput}
-                    onChange={(e) => setMaxInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                    className="filter-price-input"
-                  />
-                </div>
-                <div className="filter-price-actions">
-                  <button className="btn btn-primary btn-sm" onClick={applyPrice}>
-                    Apply
-                  </button>
-                  {(priceFilter.min != null || priceFilter.max != null) && (
-                    <button className="filter-price-clear" onClick={clearPrice}>
-                      Clear
-                    </button>
-                  )}
-                </div>
-                {(priceFilter.min != null || priceFilter.max != null) && (
-                  <p className="filter-price-summary">
-                    {priceFilter.min != null
-                      ? `₹${priceFilter.min.toLocaleString("en-IN")}`
-                      : "₹0"}
-                    {" – "}
-                    {priceFilter.max != null
-                      ? `₹${priceFilter.max.toLocaleString("en-IN")}`
-                      : "No limit"}
-                  </p>
-                )}
+        {/* Grid */}
+        <div className="cat-content" ref={productsRef}>
+          {loading ? (
+            <div className="spinner" />
+          ) : products.length === 0 ? (
+            <div className="empty">No products match these filters.</div>
+          ) : (
+            <>
+              <div className="cat-grid">
+                {products.map((p) => (
+                  <ProductCard key={p._id} product={p} onAdd={onAdd} onWishlist={onWish} />
+                ))}
               </div>
-            </FilterGroup>
-          </aside>
 
-          {/* Grid */}
-          <div className="cat-content">
-            {loading ? (
-              <div className="spinner" />
-            ) : products.length === 0 ? (
-              <div className="empty">No products match these filters.</div>
-            ) : (
-              <>
-                <div className="cat-grid">
-                  {products.map((p) => (
-                    <ProductCard key={p._id} product={p} onAdd={onAdd} onWishlist={onWish} />
+              {totalPages > 1 && (
+                <div className="cat-pager">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      className={"cat-pager-dot" + (n === page ? " active" : "")}
+                      onClick={() => setPage(n)}
+                      aria-label={`Page ${n}`}
+                    />
                   ))}
                 </div>
-
-                {totalPages > 1 && (
-                  <div className="cat-pager">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                      <button
-                        key={n}
-                        className={"cat-pager-dot" + (n === page ? " active" : "")}
-                        onClick={() => setPage(n)}
-                        aria-label={`Page ${n}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export interface FilterGroupHandle {
-  open: () => void;
-  el: HTMLDivElement | null;
-}
-
-const FilterGroup = forwardRef<
-  FilterGroupHandle,
-  { title: string; children: React.ReactNode }
->(function FilterGroup({ title, children }, ref) {
-  // Collapsed by default on mobile (sidebar renders above the product grid
-  // there, per Category.css's 820px breakpoint) so users see products sooner
-  // instead of scrolling past four open filter groups first.
-  const [open, setOpen] = useState(
-    () => typeof window === "undefined" || window.innerWidth > 820,
-  );
+// Dropdown filter — sits in the horizontal filter bar above the product
+// grid instead of a collapsible section in a left sidebar. Closes on
+// outside click like a normal menu.
+function FilterDropdown({
+  title,
+  children,
+  badge,
+}: {
+  title: string;
+  children: React.ReactNode;
+  badge?: number;
+}) {
+  const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Lets the quick-filter buttons above the product list force this group
-  // open (it may currently be collapsed on mobile) and scroll to it.
-  useImperativeHandle(ref, () => ({
-    open: () => setOpen(true),
-    get el() {
-      return wrapRef.current;
-    },
-  }));
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [open]);
 
   return (
-    <div className="filter-group" ref={wrapRef}>
-      <button className="filter-head" onClick={() => setOpen((o) => !o)}>
+    <div className="filter-dd" ref={wrapRef}>
+      <button
+        type="button"
+        className={`filter-dd-trigger ${open ? "open" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+      >
         <span>{title}</span>
+        {!!badge && <span className="filter-dd-badge">{badge}</span>}
         <FiChevronDown style={{ transform: open ? "rotate(180deg)" : "none" }} />
       </button>
-      {open && <div className="filter-body">{children}</div>}
+      {open && <div className="filter-dd-panel">{children}</div>}
     </div>
   );
-});
+}

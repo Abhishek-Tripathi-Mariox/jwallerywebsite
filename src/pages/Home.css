@@ -15,12 +15,20 @@
   background-color: #fffdf7;
 }
 
-/* Live gold price strip */
+/* Live gold price strip — was a near-black gradient sitting flush against
+   the (also dark) hero section right below it, with 90%-opacity text and no
+   dividing edge, so the two dark blocks visually ran into each other and
+   the numbers read as low-contrast/washed out instead of "live" data. */
 .gold-strip {
-  background: linear-gradient(90deg, #1a1a1a, #2a1a22);
+  background: linear-gradient(90deg, #2a1a22, #3a2230);
   color: #fff;
   font-size: 13px;
-  padding: 8px 0;
+  font-weight: 600;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 1;
 }
 .gold-strip-inner {
   display: flex;
@@ -29,55 +37,40 @@
   flex-wrap: wrap;
   justify-content: center;
 }
-.gold-strip-pill { color: rgba(255, 255, 255, 0.9); }
+.gold-strip-pill { color: #fff; }
 .gold-strip-pill strong {
   color: var(--color-gold);
   margin-right: 6px;
-  font-weight: 700;
+  font-weight: 800;
 }
 .gold-strip-live {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 1.4px;
-  color: #f87171;
+  color: #ff8080;
 }
 
-/* Hero */
+/* Hero — full-scale banner image, no text block overlaid on it. Admin-
+   uploaded banners already carry their own design/message; a wide (21:9)
+   ratio reads as a proper full-width hero rather than the old 4:3 box that
+   only filled half the row next to a text column. */
 .hero {
   background: linear-gradient(180deg, #1a1a1a 0%, #2a2026 100%);
   color: #fff;
-  padding: 64px 0;
-}
-.hero-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 48px;
-}
-.hero-text .hero-eyebrow {
-  display: inline-block;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  font-size: 12px;
-  color: var(--color-gold);
-  margin-bottom: 16px;
-}
-.hero-text h1 {
-  font-size: 56px;
-  line-height: 1.05;
-  color: #fff;
-  margin-bottom: 16px;
-  letter-spacing: 1px;
-}
-.hero-text p {
-  color: rgba(255, 255, 255, 0.75);
-  margin-bottom: 28px;
-  max-width: 460px;
+  padding: 24px 0;
 }
 .hero-image {
+  position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 21 / 9;
+}
+.hero-image-tap {
+  width: 100%;
+  height: 100%;
+}
+.hero-carousel .hero-image-tap {
+  cursor: pointer;
 }
 .hero-image img,
 .hero-image video {
@@ -85,12 +78,17 @@
   height: 100%;
   object-fit: cover;
 }
+.hero-cta {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2;
+}
 
 /* Hero carousel (auto-scrolling "New Collection" banners) */
 .hero-carousel {
   position: relative;
 }
-.hero-carousel .hero-text h1,
 .hero-carousel .hero-image img {
   animation: heroFade 0.5s ease;
 }
@@ -145,7 +143,12 @@
   width: 26px;
 }
 @media (max-width: 768px) {
-  .hero-nav { display: none; }
+  /* Arrows stay visible on mobile — touch devices have no hover state to
+     reveal them, so hiding them here left tapping the image (see
+     .hero-image-tap) and the dots as the only way to change slides. */
+  .hero-nav { width: 36px; height: 36px; font-size: 20px; }
+  .hero-nav-prev { left: 12px; }
+  .hero-nav-next { right: 12px; }
 }
 
 /* Category cards (large with overlay text) */
@@ -183,11 +186,9 @@
   margin: 0;
 }
 
-/* Offer banners */
-.offer-section {
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
+/* Offer banners — now a standard .section like every other homepage block
+   (was previously margin-only with no title, breaking the section rhythm
+   and never able to show a full-bleed background). */
 /* Carousel: shows 2 banners at a time, the rest scroll horizontally. */
 .offer-carousel {
   position: relative;
@@ -244,7 +245,11 @@
   position: relative;
   padding: 40px;
   border-radius: var(--radius);
-  min-height: 220px;
+  /* A fixed ratio (not just a min-height floor) so every offer card is the
+     same height regardless of how long the admin's title text is — two
+     cards with different title lengths used to render at different
+     heights side by side. */
+  aspect-ratio: 2.4 / 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -417,10 +422,10 @@
   letter-spacing: 0.4px;
 }
 
-/* Assurance — matches the mobile app's Assurance card */
-.assurance {
-  background: #fff;
-}
+/* Assurance — matches the mobile app's Assurance card.
+   Background color comes from `.home .assurance` (higher specificity) —
+   this used to also declare `background: #fff` here, which was always
+   overridden and never actually rendered; removed as dead/misleading CSS. */
 .assurance-card {
   background: #f5f5f5;
   border-radius: var(--radius-lg);
@@ -506,19 +511,25 @@
 }
 
 @media (max-width: 900px) {
-  .hero { padding: 40px 0; }
-  .hero-inner { grid-template-columns: 1fr; gap: 28px; }
-  .hero-text h1 { font-size: 36px; }
   .cta-inner { grid-template-columns: 1fr; padding: 28px; }
   .round-cat { flex: 0 0 calc(33.33% - 22px); }
-  .offer-card { padding: 28px; min-height: 180px; }
+  .offer-card { padding: 28px; aspect-ratio: 1.8 / 1; }
   .offer-card h3 { font-size: 24px; }
 }
 @media (max-width: 600px) {
-  .hero-text h1 { font-size: 30px; }
+  /* A 21:9 crop reads as a thin strip on a narrow phone — use a taller
+     ratio so the banner still has real visual weight on mobile. */
+  .hero-image { aspect-ratio: 4 / 3; }
+  .hero-cta { left: 16px; bottom: 16px; }
   /* One offer card at a time, peeking the next so the scroll is discoverable. */
   .offer-track > .offer-card { flex: 0 0 85%; }
-  .offer-nav { display: none; }
+  /* Arrows stay visible on mobile — touch devices have no hover state to
+     reveal them, and swiping alone doesn't make it obvious the carousel is
+     scrollable. Shrunk and pulled inward so they don't overflow the
+     viewport edge at narrow widths. */
+  .offer-nav { width: 36px; height: 36px; font-size: 18px; }
+  .offer-nav-prev { left: 4px; }
+  .offer-nav-next { right: 4px; }
   .round-cats { gap: 16px; justify-content: space-around; }
   .round-cat { flex: 0 0 calc(50% - 16px); min-width: 0; }
   .round-cat-circle { width: 88px; height: 88px; }
@@ -566,6 +577,10 @@
 .cv-viewport {
   overflow: hidden;
   width: 100%;
+  /* Horizontal swipe is handled manually (JS touch handlers driving the
+     transform), so tell the browser not to also try to pan/scroll this
+     axis itself — vertical page scroll still works normally. */
+  touch-action: pan-y;
 }
 .cv-track {
   display: flex;

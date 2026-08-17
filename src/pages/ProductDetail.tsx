@@ -4,6 +4,7 @@ import { FiArrowLeft, FiHeart, FiShoppingCart, FiShare2, FiBox } from "react-ico
 import { FaStar } from "react-icons/fa";
 import {
   fetchProductDetails,
+  fetchProductsBrowse,
   fetchFeaturedProducts,
   fetchNewArrivals,
   fetchChargesConfig,
@@ -53,15 +54,32 @@ export default function ProductDetail() {
     });
   }, [id]);
 
-  // Recommended products — real catalog items (featured, falling back to new
-  // arrivals). Loaded once; the current product is filtered out at render.
+  // Recommended products — same category as the product being viewed, so
+  // "You May Also Like" is actually related instead of a generic
+  // featured/new-arrivals list unrelated to what the shopper is looking at.
+  // Falls back to featured/new-arrivals only if the category has nothing
+  // else in it (or the product has no category at all).
   useEffect(() => {
+    if (!product) return;
+    // The backend's product-detail response nests the populated category as
+    // `category._id` alongside the raw `categoryId` — check both shapes.
+    const categoryId =
+      (product as any)?.categoryId || (product as any)?.category?._id;
     (async () => {
-      let list = asList<any>((await fetchFeaturedProducts())?.data);
+      let list: any[] = [];
+      if (categoryId) {
+        const res: any = await fetchProductsBrowse({ categoryIds: [categoryId], limit: 5 });
+        list = asList<any>(res?.data?.products ?? res?.data);
+        // The only "match" in this category might be the product itself —
+        // check emptiness after excluding it, or a lone-product category
+        // would wrongly skip the featured/new-arrivals fallback below.
+        list = list.filter((rp) => rp._id !== product._id);
+      }
+      if (!list.length) list = asList<any>((await fetchFeaturedProducts())?.data);
       if (!list.length) list = asList<any>((await fetchNewArrivals())?.data);
       setRecommended(list.map(normalizeProduct));
     })();
-  }, []);
+  }, [product]);
 
   const recommendedProducts = recommended
     .filter((rp) => rp._id !== id)
@@ -272,6 +290,7 @@ export default function ProductDetail() {
             <span>(248 reviews)</span>
           </div>
 
+          {(p as any).brand && <div className="pdp-brand">{(p as any).brand}</div>}
           <h1 className="pdp-title">{p.productName}</h1>
 
           <p className="pdp-desc">
@@ -363,16 +382,16 @@ export default function ProductDetail() {
               </>
             ) : (
               <>
+                {/* Gold items are gold-plated brass (~10% actual gold), not
+                    solid karat gold — Material already states this (e.g.
+                    "10% of 24K Gold"), so no separate BIS Hallmark /
+                    Purity claim is shown here. */}
                 {(p as any).material && (
                   <div className="spec-row">
                     <span>Material</span>
                     <strong>{(p as any).material}</strong>
                   </div>
                 )}
-                <div className="spec-row">
-                  <span>Purity</span>
-                  <strong>BIS Hallmarked</strong>
-                </div>
               </>
             )}
             {/* Additional details — each row hides itself when the field is
@@ -399,6 +418,12 @@ export default function ProductDetail() {
               <div className="spec-row">
                 <span>Collection</span>
                 <strong>{(p as any).collectionName}</strong>
+              </div>
+            )}
+            {(p as any).features && (
+              <div className="spec-row">
+                <span>Features</span>
+                <strong>{(p as any).features}</strong>
               </div>
             )}
             {(p as any).careInstructions && (

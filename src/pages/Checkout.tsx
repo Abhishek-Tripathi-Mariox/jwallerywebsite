@@ -69,10 +69,17 @@ export default function Checkout() {
   const [shippingCost, setShippingCost] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
   const [charges, setCharges] = useState<PublicChargesConfig | null>(null);
+  // Coupons are applied on the Cart page — Checkout just carries the
+  // already-applied discount through so it isn't silently dropped/hidden
+  // between the two pages.
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const [showAddrModal, setShowAddrModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddrList, setShowAddrList] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const loadAddresses = useCallback(async (preferId?: string) => {
     const addrRes: any = await fetchAddresses();
@@ -91,12 +98,10 @@ export default function Checkout() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!hasToken()) {
-      navigate("/login?next=/checkout", { replace: true });
-      return;
-    }
-    (async () => {
+  const loadCheckout = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
       const [cartRes, chargesRes]: any = await Promise.all([
         fetchCart(),
         fetchChargesConfig(),
@@ -105,10 +110,25 @@ export default function Checkout() {
       setItems(data.items || []);
       setShippingCost(Number(data.shippingCost) || 0);
       setPlatformFee(Number(data.platformFee) || 0);
+      setCouponCode(data.couponCode || "");
+      setCouponDiscount(Number(data.couponDiscount) || 0);
       if (chargesRes?.data) setCharges(chargesRes.data);
       await loadAddresses();
-    })();
-  }, [navigate, loadAddresses]);
+    } catch (err) {
+      console.error("Checkout load failed:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadAddresses]);
+
+  useEffect(() => {
+    if (!hasToken()) {
+      navigate("/login?next=/checkout", { replace: true });
+      return;
+    }
+    loadCheckout();
+  }, [navigate, loadCheckout]);
 
   const selected = addresses.find((a) => a._id === selectedId) || null;
 
@@ -127,7 +147,12 @@ export default function Checkout() {
     charges?.prepaidDiscountActive ? Number(charges.prepaidDiscountPercent) || 0 : 0;
   const prepaidDiscount =
     isPrepaid && prepaidPercent > 0 ? Math.round((subtotal * prepaidPercent) / 100) : 0;
-  const total = subtotal + shippingCost + platformFee - prepaidDiscount;
+  // GST/platform fee are computed on the taxable value (post-coupon), same
+  // base the backend uses — matches ChargeConfigService.computeCharges.
+  const taxableSubtotal = Math.max(0, subtotal - couponDiscount);
+  const gstPercent = charges?.gstActive ? Number(charges.gstPercent) || 0 : 0;
+  const gstAmount = gstPercent > 0 ? Math.round((taxableSubtotal * gstPercent) / 100) : 0;
+  const total = subtotal + shippingCost + platformFee + gstAmount - prepaidDiscount - couponDiscount;
 
   const handlePlaceOrder = async () => {
     if (!selectedId) {
@@ -281,6 +306,27 @@ export default function Checkout() {
       /* ignore — UI state is already updated */
     });
   };
+
+  if (loading) {
+    return (
+      <div className="container checkout">
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container checkout">
+        <div className="empty-addr">
+          <p>Could not load your checkout details. Please try again.</p>
+          <button className="btn btn-primary" onClick={() => loadCheckout()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container checkout">
@@ -445,6 +491,18 @@ export default function Checkout() {
               <strong>{fmt(platformFee)}</strong>
             </div>
           )}
+          {gstAmount > 0 && (
+            <div className="sum-row">
+              <span>GST ({gstPercent}%)</span>
+              <strong>{fmt(gstAmount)}</strong>
+            </div>
+          )}
+          {couponDiscount > 0 && (
+            <div className="sum-row">
+              <span>Coupon discount ({couponCode})</span>
+              <strong className="free">- {fmt(couponDiscount)}</strong>
+            </div>
+          )}
           {prepaidDiscount > 0 && (
             <div className="sum-row">
               <span>Prepaid discount ({prepaidPercent}%)</span>
@@ -460,7 +518,7 @@ export default function Checkout() {
             className="btn btn-primary"
             style={{ width: "100%", marginTop: 20 }}
             onClick={handlePlaceOrder}
-            disabled={placing || !selectedId}
+            disabled={placing || !selectedId || items.length === 0 || total <= 0}
           >
             <FiTruck /> {placing ? "Placing..." : "Place Order"}
           </button>

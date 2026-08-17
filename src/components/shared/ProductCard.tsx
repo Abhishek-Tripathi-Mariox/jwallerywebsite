@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FiHeart, FiShoppingBag } from "react-icons/fi";
+import { FiHeart, FiShoppingCart } from "react-icons/fi";
 import type { Product } from "../../types";
 import { hasToken } from "../../lib/authGate";
 import { useUiStore } from "../../store";
@@ -63,7 +63,7 @@ export default function ProductCard({ product, onAdd, onWishlist }: Props) {
             onClick={() => onAdd?.(product)}
             aria-label="Add to cart"
           >
-            <FiShoppingBag />
+            <FiShoppingCart />
           </button>
         </div>
       </div>

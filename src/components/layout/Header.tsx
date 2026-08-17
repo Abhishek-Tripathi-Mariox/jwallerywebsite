@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { FiHeart, FiShoppingCart, FiUser, FiMenu, FiX } from "react-icons/fi";
+import { FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiMessageCircle } from "react-icons/fi";
 import { useAuthStore, useUiStore } from "../../store";
 import { useLogoStore } from "../../store/logoStore";
 import { useGuestStore } from "../../store/guestStore";
 import { A } from "../../assets/figma";
+import { fetchSupportInfo } from "../../services/api";
 import NotificationBell from "./NotificationBell";
 import "./Header.css";
 
@@ -27,6 +28,16 @@ export default function Header() {
   const guestWishlistCount = useGuestStore((s) => s.wishlistCount);
   const primaryLogo = useLogoStore((s) => s.byType.primary?.imageUrl);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [whatsapp, setWhatsapp] = useState("");
+
+  useEffect(() => {
+    fetchSupportInfo().then((r: any) => {
+      if (r?.code === 1 && r.data?.whatsapp) setWhatsapp(r.data.whatsapp);
+    });
+  }, []);
+  const whatsappUrl = whatsapp
+    ? `https://wa.me/${String(whatsapp).replace(/\D/g, "")}`
+    : "";
 
   // Refresh counts on every route change. This is what makes the cart /
   // wishlist badges feel live — landing on Home, opening a product, returning
@@ -53,6 +64,17 @@ export default function Header() {
 
   return (
     <header className="site-header">
+      {/* Brand tagline — a continuously scrolling strip at the very top,
+          separate from the utility bar below it. Starts fully off-screen to
+          the right (via the track's padding-left: 100%) and scrolls left,
+          like a proper news-ticker, instead of already being visible at the
+          left edge the moment the page loads. */}
+      <div className="brand-marquee" aria-hidden="true">
+        <div className="brand-marquee-track">
+          <span>India's most trusted jewellery brand. Crafting timeless elegance since 1970.</span>
+        </div>
+      </div>
+
       {/* Top utility strip */}
       <div className="utility-bar">
         <div className="container utility-inner">
@@ -61,6 +83,11 @@ export default function Header() {
             <Link to="/orders">Track Order</Link>
             <Link to="/store-locator">Store Locator</Link>
             <Link to="/contact-us">Contact Us</Link>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="utility-whatsapp">
+                <FiMessageCircle /> WhatsApp
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -152,6 +179,11 @@ export default function Header() {
           <Link to="/orders">Track Order</Link>
           <Link to="/store-locator">Store Locator</Link>
           <Link to="/contact-us">Contact Us</Link>
+          {whatsappUrl && (
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <FiMessageCircle /> WhatsApp
+            </a>
+          )}
         </div>
       </aside>
     </header>

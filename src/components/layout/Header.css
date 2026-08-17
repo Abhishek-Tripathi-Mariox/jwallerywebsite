@@ -6,6 +6,35 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
+/* Scrolling brand tagline strip */
+.brand-marquee {
+  background: #1a1a1a;
+  color: var(--color-gold);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 6px 0;
+}
+.brand-marquee-track {
+  display: inline-block;
+  /* Push the whole track past the right edge of its own container to start,
+     so the very first frame is blank and the text visibly enters from the
+     right instead of already sitting at the left edge on load. */
+  padding-left: 100%;
+  animation: brand-marquee-scroll 16s linear infinite;
+}
+.brand-marquee-track span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+@keyframes brand-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-marquee-track { animation: none; }
+}
+
 .utility-bar {
   background: var(--color-primary);
   color: #fff;
@@ -20,9 +49,15 @@
 }
 .utility-right {
   display: flex;
+  align-items: center;
   gap: 24px;
 }
 .utility-right a:hover { text-decoration: underline; }
+.utility-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 
 .header-main {
   display: flex;
@@ -296,6 +331,9 @@
   border-top: 1px solid var(--color-border);
 }
 .nav-drawer-utility a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   color: var(--color-text-muted);
   padding: 8px 0;
@@ -311,7 +349,14 @@
   /* Center the logo between the hamburger and the actions */
   .header-main { gap: 12px; padding: 12px 0; }
   .brand { margin: 0 auto; }
-  .brand-logo { height: 36px; }
+  /* The source logo image has a wide (~5:1) aspect ratio — at the old 36px
+     height it rendered ~188px wide, which alone pushed the header past a
+     375px viewport (nav-toggle + logo + 4 action icons totaled ~446px,
+     forcing the whole page's layout viewport wider than the device and
+     requiring the user to zoom to read anything at normal size). Cap the
+     width directly instead of just the height so it scales predictably
+     regardless of the source image's aspect ratio. */
+  .brand-logo { height: auto; width: 130px; }
 }
 
 /* Above the drawer breakpoint, the drawer can never be visible */
@@ -323,6 +368,8 @@
 @media (max-width: 480px) {
   .utility-bar { font-size: 11px; }
   .utility-right { gap: 14px; }
-  .header-actions { gap: 6px; }
-  .icon-btn { width: 40px; height: 40px; font-size: 17px; }
+  .header-main { gap: 8px; }
+  .header-actions { gap: 4px; }
+  .icon-btn, .nav-toggle { width: 36px; height: 36px; font-size: 16px; }
+  .brand-logo { width: 88px; }
 }

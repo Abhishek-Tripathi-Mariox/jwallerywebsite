@@ -12,6 +12,7 @@ import {
 import { fetchOrderDetails, cancelOrder } from "../services/api";
 import { hasToken } from "../lib/authGate";
 import { toast } from "../store/toastStore";
+import CancelOrderModal from "../components/shared/CancelOrderModal";
 import "./OrderDetail.css";
 
 const fmt = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -32,20 +33,21 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!id) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const res: any = await fetchOrderDetails(id);
       if (res?.code === 1 && res?.data) {
         setOrder(res.data);
-      } else {
+      } else if (!silent) {
         setError(res?.message || "Order not found");
       }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
@@ -55,20 +57,32 @@ export default function OrderDetail() {
       return;
     }
     load();
+    // Admin-side status changes aren't pushed to the page — poll while the
+    // tab is visible, and refetch immediately whenever it regains focus, so
+    // this doesn't go stale on a tab left open.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load(true);
+    }, 20000);
+    const onFocus = () => load(true);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [id, navigate, load]);
 
-  const handleCancel = async () => {
+  const handleCancelSubmit = async (reason: string, feedback: string) => {
     if (!order || !id) return;
-    const reason = window.prompt("Reason for cancellation (optional):") ?? "";
-    if (reason === null) return;
     setCancelling(true);
     try {
-      const res: any = await cancelOrder(id, reason);
+      const fullReason = feedback.trim() ? `${reason} — ${feedback.trim()}` : reason;
+      const res: any = await cancelOrder(id, fullReason);
       if (res?.code !== 1) {
         toast.error(res?.message || "Could not cancel order");
         return;
       }
       toast.success("Order cancelled");
+      setCancelModalOpen(false);
       await load();
     } finally {
       setCancelling(false);
@@ -131,7 +145,7 @@ export default function OrderDetail() {
         {canCancel && (
           <button
             className="btn btn-outline-primary"
-            onClick={handleCancel}
+            onClick={() => setCancelModalOpen(true)}
             disabled={cancelling}
           >
             <FiX /> {cancelling ? "Cancelling..." : "Cancel order"}
@@ -235,6 +249,12 @@ export default function OrderDetail() {
               <strong>{fmt(order.platformFee)}</strong>
             </div>
           )}
+          {order.gstAmount > 0 && (
+            <div className="sum-row">
+              <span>GST</span>
+              <strong>{fmt(order.gstAmount)}</strong>
+            </div>
+          )}
           {order.couponDiscount > 0 && (
             <div className="sum-row">
               <span>Coupon discount</span>
@@ -265,6 +285,14 @@ export default function OrderDetail() {
       <Link to="/orders" className="link-action od-bottom-link">
         ← Back to all orders
       </Link>
+
+      <CancelOrderModal
+        open={cancelModalOpen}
+        orderId={id}
+        submitting={cancelling}
+        onClose={() => setCancelModalOpen(false)}
+        onSubmit={handleCancelSubmit}
+      />
     </div>
   );
 }

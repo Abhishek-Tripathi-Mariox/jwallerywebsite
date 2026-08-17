@@ -40,6 +40,10 @@ export interface Product {
     goldPurityPercent?: number;
     makingChargePercent?: number;
   };
+  // Used to fetch genuinely related products on the product detail page
+  // (same category), rather than a generic featured/new-arrivals list.
+  categoryId?: string;
+  material?: string;
 }
 
 export interface Banner {

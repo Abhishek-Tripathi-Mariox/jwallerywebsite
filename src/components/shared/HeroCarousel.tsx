@@ -49,54 +49,63 @@ export default function HeroCarousel({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="container hero-inner">
-        <div className="hero-text">
-          {current.subtitle && (
-            <span className="hero-eyebrow">{current.subtitle}</span>
-          )}
-          <h1>{current.title}</h1>
+      {/* Full-scale banner image, no title/description text overlaid on it —
+          admin-uploaded banners already carry their own message/design, so a
+          second HTML text block on top was redundant. Arrows live inside
+          .hero-image (not the outer section) so they stay centered on the
+          image itself on every layout. Tapping the image advances to the
+          next slide; the small "Shop Now" pill in the corner is the one
+          click target that actually navigates, so it stops that tap from
+          also counting as an advance. */}
+      <div className="container">
+        <div className="hero-image">
+          <div
+            className="hero-image-tap"
+            onClick={() => count > 1 && go(safeIndex + 1)}
+          >
+            <BannerMedia
+              src={bannerImage(current) || (isVideo(current.mobileView) ? current.mobileView : A.hero)}
+              alt={current.title || "Featured collection"}
+            />
+          </div>
           <button
-            className="btn btn-hero"
-            onClick={() => navigate(current.link || "/category/new-arrivals")}
+            className="btn btn-hero hero-cta"
+            onClick={(e) => { e.stopPropagation(); navigate(current.link || "/category/new-arrivals"); }}
           >
             SHOP NOW <FiArrowRight />
           </button>
-        </div>
-        <div className="hero-image">
-          <BannerMedia
-            src={bannerImage(current) || (isVideo(current.mobileView) ? current.mobileView : A.hero)}
-            alt={current.title || "Featured collection"}
-          />
+          {count > 1 && (
+            <>
+              <button
+                className="hero-nav hero-nav-prev"
+                aria-label="Previous banner"
+                onClick={(e) => { e.stopPropagation(); go(safeIndex - 1); }}
+              >
+                ‹
+              </button>
+              <button
+                className="hero-nav hero-nav-next"
+                aria-label="Next banner"
+                onClick={(e) => { e.stopPropagation(); go(safeIndex + 1); }}
+              >
+                ›
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       {count > 1 && (
-        <>
-          <button
-            className="hero-nav hero-nav-prev"
-            aria-label="Previous banner"
-            onClick={() => go(safeIndex - 1)}
-          >
-            ‹
-          </button>
-          <button
-            className="hero-nav hero-nav-next"
-            aria-label="Next banner"
-            onClick={() => go(safeIndex + 1)}
-          >
-            ›
-          </button>
-          <div className="hero-dots">
-            {banners.map((b, i) => (
-              <button
-                key={b._id || i}
-                className={`hero-dot ${i === safeIndex ? "active" : ""}`}
-                aria-label={`Go to banner ${i + 1}`}
-                onClick={() => setIndex(i)}
-              />
-            ))}
-          </div>
-        </>
+        <div className="hero-dots">
+          {banners.map((b, i) => (
+            <button
+              key={b._id || i}
+              className={`hero-dot ${i === safeIndex ? "active" : ""}`}
+              aria-label={`Go to banner ${i + 1}`}
+              onClick={() => setIndex(i)}
+            />
+          ))}
+        </div>
       )}
     </section>
   );

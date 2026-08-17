@@ -1,17 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiTrash2 } from "react-icons/fi";
+import { FiTrash2, FiTag, FiX } from "react-icons/fi";
 import {
   fetchCart,
   removeFromCart,
   updateCartItem,
   fetchChargesConfig,
   computeChargesLocal,
+  applyCoupon,
+  removeCoupon,
   type PublicChargesConfig,
 } from "../services/api";
 import { hasToken } from "../lib/authGate";
 import { useUiStore } from "../store";
 import { useGuestStore } from "../store/guestStore";
+import { toast } from "../store/toastStore";
 import "./Cart.css";
 
 interface CartItem {
@@ -46,7 +49,11 @@ export default function Cart() {
   const [loading, setLoading] = useState(true);
   const [serverShipping, setServerShipping] = useState<number | null>(null);
   const [serverPlatformFee, setServerPlatformFee] = useState<number | null>(null);
+  const [serverGst, setServerGst] = useState<number | null>(null);
   const [chargesCfg, setChargesCfg] = useState<PublicChargesConfig | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponBusy, setCouponBusy] = useState(false);
 
   const setCartCount = useUiStore((s) => s.setCartCount);
   const guestCart = useGuestStore((s) => s.cart);
@@ -65,6 +72,8 @@ export default function Cart() {
       setItems(guestItems);
       setServerShipping(null);
       setServerPlatformFee(null);
+      setServerGst(null);
+      setAppliedCoupon(null);
       const cfgRes = await fetchChargesConfig();
       setChargesCfg(cfgRes?.data || null);
       setLoading(false);
@@ -75,6 +84,12 @@ export default function Cart() {
     setItems(data.items || []);
     setServerShipping(typeof data.shippingCost === "number" ? data.shippingCost : null);
     setServerPlatformFee(typeof data.platformFee === "number" ? data.platformFee : null);
+    setServerGst(typeof data.gstAmount === "number" ? data.gstAmount : null);
+    setAppliedCoupon(
+      data.couponCode && data.couponDiscount > 0
+        ? { code: data.couponCode, discount: data.couponDiscount }
+        : null
+    );
     // We still fetch config so we can show the "free shipping above ₹X" hint.
     const cfgRes = await fetchChargesConfig();
     setChargesCfg(cfgRes?.data || null);
@@ -96,10 +111,12 @@ export default function Cart() {
   // Logged-in users trust the server breakdown; guests get a local estimate
   // built from the public charges config (synced with the same backend math).
   const localCharges =
-    chargesCfg ? computeChargesLocal(subtotal, 0, chargesCfg) : { shipping: 0, platformFee: 0, total: subtotal };
+    chargesCfg ? computeChargesLocal(subtotal, 0, chargesCfg) : { shipping: 0, platformFee: 0, gst: 0, total: subtotal };
   const shipping = serverShipping ?? localCharges.shipping;
   const platformFee = serverPlatformFee ?? localCharges.platformFee;
-  const total = subtotal + shipping + platformFee;
+  const gst = serverGst ?? localCharges.gst;
+  const couponDiscount = appliedCoupon?.discount || 0;
+  const total = subtotal + shipping + platformFee + gst - couponDiscount;
 
   const showFreeShippingNudge =
     chargesCfg?.shippingActive &&
@@ -132,6 +149,34 @@ export default function Cart() {
     await removeFromCart(it._id);
     await load();
     refreshCounts();
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponBusy(true);
+    try {
+      const res: any = await applyCoupon(code);
+      if (res?.code === 1) {
+        toast.success(`Coupon "${res.data.coupon.code}" applied`);
+        setCouponInput("");
+        await load();
+      } else {
+        toast.error(res?.message || "Could not apply coupon");
+      }
+    } finally {
+      setCouponBusy(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponBusy(true);
+    try {
+      await removeCoupon();
+      await load();
+    } finally {
+      setCouponBusy(false);
+    }
   };
 
   const proceedToCheckout = async () => {
@@ -189,6 +234,47 @@ export default function Cart() {
 
           <aside className="cart-summary card">
             <h3>Order Summary</h3>
+
+            {hasToken() && (
+              <div className="cart-coupon">
+                {appliedCoupon ? (
+                  <div className="cart-coupon-applied">
+                    <span>
+                      <FiTag /> <strong>{appliedCoupon.code}</strong> applied
+                    </span>
+                    <button
+                      type="button"
+                      className="cart-coupon-remove"
+                      onClick={handleRemoveCoupon}
+                      disabled={couponBusy}
+                      aria-label="Remove coupon"
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="cart-coupon-input">
+                    <input
+                      type="text"
+                      placeholder="Coupon code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                      disabled={couponBusy}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={handleApplyCoupon}
+                      disabled={couponBusy || !couponInput.trim()}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="sum-row">
               <span>Subtotal</span>
               <strong>{fmt(subtotal)}</strong>
@@ -205,6 +291,18 @@ export default function Cart() {
               <div className="sum-row">
                 <span>Platform fee</span>
                 <strong>{fmt(platformFee)}</strong>
+              </div>
+            )}
+            {gst > 0 && (
+              <div className="sum-row">
+                <span>GST</span>
+                <strong>{fmt(gst)}</strong>
+              </div>
+            )}
+            {couponDiscount > 0 && (
+              <div className="sum-row">
+                <span>Coupon discount ({appliedCoupon?.code})</span>
+                <strong className="free">− {fmt(couponDiscount)}</strong>
               </div>
             )}
             {showFreeShippingNudge && (

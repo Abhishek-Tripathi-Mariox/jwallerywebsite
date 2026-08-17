@@ -10,17 +10,31 @@ const directionsUrl = (store: Store) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
+// No Google Maps JS API key is configured for this project, so the embed
+// uses the key-less `output=embed` form instead of the Maps JavaScript API.
+const embedUrl = (store: Store) => {
+  const query = store.latitude && store.longitude
+    ? `${store.latitude},${store.longitude}`
+    : [store.address, store.city, store.state, store.pincode].filter(Boolean).join(", ");
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
+};
+
 export default function StoreLocator() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const res = await fetchStores();
-      setStores(res.data || []);
+      const list = res.data || [];
+      setStores(list);
+      setSelectedId(list[0]?._id || null);
       setLoading(false);
     })();
   }, []);
+
+  const selectedStore = stores.find((s) => s._id === selectedId) || stores[0];
 
   return (
     <div className="container store-locator-page">
@@ -35,9 +49,25 @@ export default function StoreLocator() {
           <p>Store locations will appear here soon.</p>
         </div>
       ) : (
-        <div className="store-grid">
+        <>
+          {selectedStore && (
+            <div className="store-map-wrap">
+              <iframe
+                key={selectedStore._id}
+                title={`Map — ${selectedStore.name}`}
+                src={embedUrl(selectedStore)}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          )}
+          <div className="store-grid">
           {stores.map((store) => (
-            <div key={store._id} className="store-card">
+            <div
+              key={store._id}
+              className={`store-card ${store._id === selectedId ? "active" : ""}`}
+              onClick={() => setSelectedId(store._id)}
+            >
               <h3>{store.name}</h3>
               <p className="store-row">
                 <FiMapPin />
@@ -67,7 +97,8 @@ export default function StoreLocator() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

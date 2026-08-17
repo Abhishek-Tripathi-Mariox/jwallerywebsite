@@ -175,6 +175,15 @@
   font-weight: 500;
 }
 
+.pdp-brand {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
 .pdp-title {
   font-size: 32px;
   font-weight: 800;

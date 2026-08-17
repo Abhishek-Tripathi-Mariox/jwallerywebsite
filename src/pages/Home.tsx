@@ -167,23 +167,17 @@ export default function Home() {
         <HeroCarousel banners={heroBanners} />
       ) : (
         <section className="hero">
-          <div className="container hero-inner">
-            <div className="hero-text">
-              <span className="hero-eyebrow">New Collection</span>
-              <h1>NEW COLLECTION ARRIVED</h1>
-              <p>
-                Discover the timeless beauty of our newest collection —
-                handcrafted in 22K gold and brilliant diamonds.
-              </p>
+          <div className="container">
+            <div className="hero-image">
+              <div className="hero-image-tap">
+                <img src={A.hero} alt="Featured collection" />
+              </div>
               <button
-                className="btn btn-hero"
+                className="btn btn-hero hero-cta"
                 onClick={() => navigate("/category/new-arrivals")}
               >
                 SHOP NOW <FiArrowRight />
               </button>
-            </div>
-            <div className="hero-image">
-              <img src={A.hero} alt="Featured collection" />
             </div>
           </div>
         </section>
@@ -215,54 +209,57 @@ export default function Home() {
       {/* Offer Banners (after "Shop by Category") — renders every admin
           `home_offers` banner, alternating the light/dark card styles. */}
       {offerBanners.length > 0 && (
-        <section className="container offer-section">
-          <div className="offer-carousel">
-            {offerBanners.length > 2 && (
-              <button
-                type="button"
-                className="offer-nav offer-nav-prev"
-                aria-label="Previous offers"
-                onClick={() => scrollOffers(-1)}
-              >
-                <FiChevronLeft />
-              </button>
-            )}
-            <div className="offer-track" ref={offerTrackRef}>
-              {offerBanners.map((offer, i) => (
-                <div
-                  key={offer._id || i}
-                  className={`offer-card ${i % 2 === 0 ? "offer-light" : "offer-dark"}`}
+        <section className="section">
+          <div className="container">
+            <h2 className="section-title">Special Offers</h2>
+            <div className="offer-carousel">
+              {offerBanners.length > 2 && (
+                <button
+                  type="button"
+                  className="offer-nav offer-nav-prev"
+                  aria-label="Previous offers"
+                  onClick={() => scrollOffers(-1)}
                 >
-                  {bannerImage(offer) && (
-                    <BannerMedia
-                      src={bannerImage(offer)}
-                      alt={offer.title}
-                      className="offer-media"
-                    />
-                  )}
-                  {offer.subtitle && (
-                    <span className="offer-tag">{offer.subtitle}</span>
-                  )}
-                  <h3>{offer.title}</h3>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => navigate(offer.link || "/category/all")}
+                  <FiChevronLeft />
+                </button>
+              )}
+              <div className="offer-track" ref={offerTrackRef}>
+                {offerBanners.map((offer, i) => (
+                  <div
+                    key={offer._id || i}
+                    className={`offer-card ${i % 2 === 0 ? "offer-light" : "offer-dark"}`}
                   >
-                    Shop Now <FiArrowRight />
-                  </button>
-                </div>
-              ))}
+                    {bannerImage(offer) && (
+                      <BannerMedia
+                        src={bannerImage(offer)}
+                        alt={offer.title}
+                        className="offer-media"
+                      />
+                    )}
+                    {offer.subtitle && (
+                      <span className="offer-tag">{offer.subtitle}</span>
+                    )}
+                    <h3>{offer.title}</h3>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => navigate(offer.link || "/category/all")}
+                    >
+                      Shop Now <FiArrowRight />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {offerBanners.length > 2 && (
+                <button
+                  type="button"
+                  className="offer-nav offer-nav-next"
+                  aria-label="Next offers"
+                  onClick={() => scrollOffers(1)}
+                >
+                  <FiChevronRight />
+                </button>
+              )}
             </div>
-            {offerBanners.length > 2 && (
-              <button
-                type="button"
-                className="offer-nav offer-nav-next"
-                aria-label="Next offers"
-                onClick={() => scrollOffers(1)}
-              >
-                <FiChevronRight />
-              </button>
-            )}
           </div>
         </section>
       )}

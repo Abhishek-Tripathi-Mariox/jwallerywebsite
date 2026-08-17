@@ -71,7 +71,9 @@ export default function Orders() {
       return;
     }
     let cancelled = false;
-    (async () => {
+
+    const load = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res: any = await fetchOrders();
         if (cancelled) return;
@@ -120,9 +122,22 @@ export default function Orders() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+
+    load();
+    // Admin-side status changes aren't pushed to the page — poll while the
+    // tab is visible, and refetch immediately whenever it regains focus, so
+    // badges don't go stale on a tab left open.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") load(true);
+    }, 20000);
+    const onFocus = () => load(true);
+    window.addEventListener("focus", onFocus);
+
     return () => {
       cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
     };
   }, [navigate]);
 

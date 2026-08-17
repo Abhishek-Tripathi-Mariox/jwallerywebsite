@@ -34,9 +34,12 @@ export default function Footer() {
             Crafting timeless elegance since 1970.
           </p>
           <div className="socials">
-            <a href="#" aria-label="Facebook"><FaFacebookF /></a>
-            <a href="#" aria-label="Instagram"><FaInstagram /></a>
-            <a href="#" aria-label="Twitter"><FaTwitter /></a>
+            {/* Facebook/Instagram match the handles the mobile app already
+                links to (MyProfileScreen). No YouTube channel URL exists
+                yet, so that one stays a placeholder for now. */}
+            <a href="https://facebook.com/swarnaz" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>
+            <a href="https://instagram.com/swarnaz" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
+            <a href="https://twitter.com/swarnaz" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FaTwitter /></a>
             <a href="#" aria-label="YouTube"><FaYoutube /></a>
           </div>
         </div>
