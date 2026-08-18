@@ -704,6 +704,31 @@
   -webkit-overflow-scrolling: touch;
   padding-bottom: 6px;
 }
+/* Auto-scrolling variant — used once there are enough reels for a
+   continuous drift to read as a live gallery rather than a jumpy loop.
+   The track's content is rendered twice (see ReelsStrip.tsx); animating
+   exactly to -50% lands on the duplicate at the moment it's indistinguishable
+   from the original, so the loop has no visible seam or pause. */
+.reels-viewport {
+  overflow: hidden;
+}
+.reels-track-auto {
+  width: max-content;
+  padding-bottom: 0;
+  animation-name: reels-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.reels-viewport:hover .reels-track-auto {
+  animation-play-state: paused;
+}
+@keyframes reels-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reels-track-auto { animation: none; }
+}
 .reel-card {
   position: relative;
   display: block;
