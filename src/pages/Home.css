@@ -349,11 +349,17 @@
   aspect-ratio: 16 / 7;
   background: #1a1a1a;
 }
-.feature-card.small { aspect-ratio: 16 / 5; }
+/* Was aspect-ratio: 16/5 with the stack fixed at two grid rows — when only
+   one of the two small-slot banners is configured, that fixed ratio made it
+   render at its own short intrinsic height instead of filling the stack,
+   leaving it visibly smaller than the big card beside it. flex:1 (no
+   competing aspect-ratio) lets it fill whatever height the stack actually
+   has, whether one or two small banners are set. */
+.feature-card.small { flex: 1; min-height: 0; }
 .feature-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  grid-template-rows: 1fr 1fr;
 }
 .feature-card img {
   width: 100%;
@@ -534,6 +540,10 @@
   .round-cat { flex: 0 0 calc(50% - 16px); min-width: 0; }
   .round-cat-circle { width: 88px; height: 88px; }
   .feature-card { aspect-ratio: 4 / 3; }
+  /* .grid-2 collapses to a single column here, so the big card and the
+     stack are no longer side-by-side row-mates for flex:1 to stretch
+     against — give the small cards their own sensible height back. */
+  .feature-card.small { aspect-ratio: 16 / 9; }
   .cta-stats strong { font-size: 22px; }
 
   /* Keep the live-price strip on one clean scrollable line */
