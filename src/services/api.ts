@@ -93,6 +93,14 @@ export const fetchStaticPage = (slug: string) =>
 
 // ---------- Notifications ----------
 
+export interface NotificationProductLine {
+  productId?: string;
+  productName?: string;
+  productImage?: string;
+  quantity?: number;
+  price?: number;
+}
+
 export interface NotificationItem {
   _id: string;
   type: "order" | "promo" | "system" | "broadcast";
@@ -100,6 +108,9 @@ export interface NotificationItem {
   message: string;
   link?: string;
   orderId?: string | null;
+  orderNumber?: string;
+  totalAmount?: number | null;
+  products?: NotificationProductLine[];
   isBroadcast?: boolean;
   isRead: boolean;
   createdAt: string;

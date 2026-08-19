@@ -32,9 +32,9 @@ const isObjectId = (s?: string) => !!s && /^[a-f0-9]{24}$/i.test(s);
 // plated base-metal jewellery, so each karat tier is now framed as the
 // plating grade instead of a solid-gold purity claim.
 const GOLD_KARAT_MATERIALS = ["10% of 24K Gold", "10% of 22K Gold", "10% of 18K Gold"];
-const MATERIALS = [...GOLD_KARAT_MATERIALS, "999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
+const MATERIALS = [...GOLD_KARAT_MATERIALS, "10% 999 Silver", "Rose Gold", "Pearl", "Stone", "Diamond"];
 const GOLD_MATERIALS = [...GOLD_KARAT_MATERIALS, "Rose Gold"];
-const SILVER_MATERIALS = ["999 Silver"];
+const SILVER_MATERIALS = ["10% 999 Silver"];
 
 type Cat = { _id: string; categoryName: string; image?: string };
 

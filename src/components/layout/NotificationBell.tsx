@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiBell, FiCheck } from "react-icons/fi";
 import { useAuthStore } from "../../store";
 import { useNotificationStore } from "../../store/notificationStore";
+import NotificationOrderPreview from "./NotificationOrderPreview";
 
 const formatTime = (iso: string) => {
   const d = new Date(iso);
@@ -114,7 +115,7 @@ export default function NotificationBell() {
                   onClick={() => handleItemClick(n._id, n.link)}
                 >
                   <div className="notif-item-title">{n.title}</div>
-                  <div className="notif-item-msg">{n.message}</div>
+                  <NotificationOrderPreview n={n} />
                   <div className="notif-item-time">{formatTime(n.createdAt)}</div>
                 </button>
               ))

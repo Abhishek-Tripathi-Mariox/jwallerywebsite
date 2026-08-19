@@ -249,6 +249,41 @@
   margin-top: 4px;
 }
 
+.notif-order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notif-order-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: #f1f5f9;
+}
+.notif-order-line {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+}
+.notif-order-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+.notif-order-qty {
+  color: #64748b;
+}
+.notif-order-more {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.notif-order-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
 .notif-see-all {
   width: 100%;
   border: 0;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiBell, FiCheck } from "react-icons/fi";
 import { useAuthStore } from "../store";
 import { useNotificationStore } from "../store/notificationStore";
+import NotificationOrderPreview from "../components/layout/NotificationOrderPreview";
 
 const formatTime = (iso: string) => {
   const d = new Date(iso);
@@ -91,7 +92,9 @@ export default function Notifications() {
               <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{n.title}</div>
               <div style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>{formatTime(n.createdAt)}</div>
             </div>
-            <div style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>{n.message}</div>
+            <div style={{ marginTop: 4 }}>
+              <NotificationOrderPreview n={n} />
+            </div>
           </button>
         ))}
       </div>
