@@ -213,7 +213,7 @@ export const searchProducts = (q: string) =>
 // ---------- Wishlist (auth required) ----------
 
 export const fetchWishlist = () =>
-  unwrap<{ items: Product[] }>(api.get("/user/wishlist"), { items: [] });
+  unwrap<{ wishlist: any[] }>(api.get("/user/wishlist"), { wishlist: [] });
 
 export const toggleWishlist = (productId: string) =>
   unwrap(api.post("/user/wishlist/toggle", { productId }));
@@ -385,7 +385,8 @@ export const verifyRazorpayPayment = (data: {
 /**
  * Normalize backend's varying list responses into a plain array.
  * Handles: T[], { products: T[] }, { categories: T[] }, { items: T[] },
- * { offers: T[] }, { banners: T[] }, { addresses: T[] }, { orders: T[] }.
+ * { offers: T[] }, { banners: T[] }, { addresses: T[] }, { orders: T[] },
+ * { wishlist: T[] }.
  */
 export function asList<T = any>(d: any): T[] {
   if (!d) return [];
@@ -398,6 +399,7 @@ export function asList<T = any>(d: any): T[] {
     d.banners ||
     d.addresses ||
     d.orders ||
+    d.wishlist ||
     []
   );
 }

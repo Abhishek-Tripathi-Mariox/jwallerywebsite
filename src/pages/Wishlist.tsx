@@ -22,7 +22,12 @@ export default function Wishlist() {
       return;
     }
     const res: any = await fetchWishlist();
-    const list = asList<any>(res?.data).map(normalizeProduct);
+    // Wishlist rows carry the *wishlist document's* _id in `_id` and the
+    // actual product id in `productId` — swap them before normalizing so
+    // cards link/add-to-cart/toggle against the real product.
+    const list = asList<any>(res?.data).map((w: any) =>
+      normalizeProduct({ ...w, _id: w.productId || w._id }),
+    );
     setItems(list);
     setLoading(false);
   }, [guestWishlist]);
